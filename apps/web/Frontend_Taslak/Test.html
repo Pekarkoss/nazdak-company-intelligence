@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASDAQ Analytics - Kapsamlı Görünüm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950 p-6 text-slate-300 font-sans selection:bg-blue-500/30">
+    
+    <div class="max-w-[1400px] mx-auto space-y-6">
+        
+        <!-- Üst Bilgi ve Sistem Durumu (Madde 2.3) -->
+        <div class="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <div class="w-2 h-8 bg-blue-500 rounded-full"></div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">NASDAQ Analytics Pro</h1>
+                    <p class="text-xs text-slate-500 mt-1">Veri Kaynağı: Backend Cache (Gecikmeli 15 dk) | Son Başarılı Senkronizasyon: 14:30</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-xs font-bold text-emerald-400">Sistem Aktif</p>
+                    <p class="text-[10px] text-slate-500">Zamanlanmış Güncelleme (Cron): 00:00</p>
+                </div>
+                <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Manuel Senkronize Et
+                </button>
+            </div>
+        </div>
+
+        <!-- BÖLÜM 1: ANA KARŞILAŞTIRMA EKRANI (Madde 2.1) -->
+        <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Şirket Karşılaştırma Matrisi</h2>
+            
+            <!-- Filtreler ve Arama -->
+            <div class="flex flex-wrap gap-4 mb-6">
+                <input type="text" placeholder="Şirket veya Sembol Ara..." class="bg-slate-950 border border-slate-700 rounded-lg p-2.5 w-64 text-sm text-white outline-none focus:border-blue-500 placeholder-slate-600">
+                <select class="bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-blue-500">
+                    <option value="">Tüm Sektörler</option>
+                    <option value="tech">Teknoloji</option>
+                    <option value="finance">Finans</option>
+                </select>
+                <select class="bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-blue-500">
+                    <option value="">Sıralama: Piyasa Değeri (Azalan)</option>
+                    <option value="">Sıralama: Fiyat (Artan)</option>
+                    <option value="">Sıralama: Net Kâr Marjı (Azalan)</option>
+                </select>
+            </div>
+
+            <!-- Dev Tablo (Yatay Kaydırmalı) -->
+            <div class="overflow-x-auto pb-4">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-xs text-slate-500 uppercase tracking-wider bg-slate-950/50">
+                            <th class="p-3 font-semibold sticky left-0 bg-slate-900 shadow-[1px_0_0_#334155]">Sembol / Şirket</th>
+                            <th class="p-3 font-semibold">Sektör</th>
+                            <th class="p-3 font-semibold">Son Fiyat</th>
+                            <th class="p-3 font-semibold">Değişim</th>
+                            <th class="p-3 font-semibold">Piyasa Değeri</th>
+                            <th class="p-3 font-semibold">Gelir (TTM)</th>
+                            <th class="p-3 font-semibold">Net Kâr (TTM)</th>
+                            <th class="p-3 font-semibold">Gelir Büyümesi</th>
+                            <th class="p-3 font-semibold">Brüt Marj</th>
+                            <th class="p-3 font-semibold">Faaliyet Marjı</th>
+                            <th class="p-3 font-semibold">Net Marj</th>
+                            <th class="p-3 font-semibold">Toplam Varlık</th>
+                            <th class="p-3 font-semibold">Nakit & Benzeri</th>
+                            <th class="p-3 font-semibold">Toplam Borç</th>
+                            <th class="p-3 font-semibold">Serbest Nakit (FCF)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+                            <td class="p-3 font-bold text-white sticky left-0 bg-slate-900 shadow-[1px_0_0_#334155]">AAPL <span class="text-xs font-normal text-slate-500 block">Apple Inc.</span></td>
+                            <td class="p-3 text-slate-400">Teknoloji</td>
+                            <td class="p-3 font-medium text-white">$150.25</td>
+                            <td class="p-3 text-emerald-400">+1.24%</td>
+                            <td class="p-3 text-slate-300">$2.8T</td>
+                            <td class="p-3 text-slate-300">$383.2B</td>
+                            <td class="p-3 text-slate-300">$96.9B</td>
+                            <td class="p-3 text-emerald-400">5.20%</td>
+                            <td class="p-3 text-slate-300">44.1%</td>
+                            <td class="p-3 text-slate-300">30.2%</td>
+                            <td class="p-3 text-slate-300">25.3%</td>
+                            <td class="p-3 text-slate-300">$352.5B</td>
+                            <td class="p-3 text-slate-300">$61.5B</td>
+                            <td class="p-3 text-slate-300">$111.0B</td>
+                            <td class="p-3 text-slate-300">$99.5B</td>
+                        </tr>
+                        <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+                            <td class="p-3 font-bold text-white sticky left-0 bg-slate-900 shadow-[1px_0_0_#334155]">TSLA <span class="text-xs font-normal text-slate-500 block">Tesla, Inc.</span></td>
+                            <td class="p-3 text-slate-400">Otomotiv</td>
+                            <td class="p-3 font-medium text-white">$210.50</td>
+                            <td class="p-3 text-red-400">-2.10%</td>
+                            <td class="p-3 text-slate-300">$650B</td>
+                            <td class="p-3 text-slate-300 text-slate-500 font-mono text-center">N/A</td>
+                            <td class="p-3 text-slate-300">$12.5B</td>
+                            <td class="p-3 text-slate-500 font-mono text-center">N/A</td>
+                            <td class="p-3 text-slate-300">18.2%</td>
+                            <td class="p-3 text-slate-300">9.6%</td>
+                            <td class="p-3 text-slate-300">13.0%</td>
+                            <td class="p-3 text-slate-300">$82.3B</td>
+                            <td class="p-3 text-slate-300">$22.4B</td>
+                            <td class="p-3 text-slate-300 text-slate-500 font-mono text-center">N/A</td>
+                            <td class="p-3 text-slate-300">$4.3B</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="h-px bg-slate-800 my-8"></div>
+
+        <!-- BÖLÜM 2: ŞİRKET DETAY EKRANI (Madde 2.2) -->
+        <div>
+            <h2 class="text-xl font-bold text-white mb-6">Şirket Analizi: Apple Inc. (AAPL)</h2>
+            
+            <!-- Şirket Bilgi Özeti -->
+            <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 mb-6 flex flex-wrap gap-x-12 gap-y-4 text-sm">
+                <div><span class="text-slate-500 block text-xs">Borsa</span><span class="text-white font-medium">NASDAQ</span></div>
+                <div><span class="text-slate-500 block text-xs">Para Birimi</span><span class="text-white font-medium">USD</span></div>
+                <div><span class="text-slate-500 block text-xs">Sektör</span><span class="text-white font-medium">Consumer Electronics</span></div>
+                <div class="flex-1 min-w-[300px]"><span class="text-slate-500 block text-xs">Açıklama</span><span class="text-slate-300 text-xs">Apple Inc. tasarlar, üretir ve akıllı telefonlar, kişisel bilgisayarlar, tabletler, giyilebilir cihazlar pazarlar...</span></div>
+            </div>
+
+            <!-- Grafikler -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Fiyat Grafiği -->
+                <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Fiyat Trendi</h3>
+                        <div class="flex space-x-1 text-xs font-medium">
+                            <button class="px-2 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">1A</button>
+                            <button class="px-2 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">3A</button>
+                            <button class="px-2 py-1 bg-blue-600 text-white rounded">6A</button>
+                            <button class="px-2 py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">1Y</button>
+                        </div>
+                    </div>
+                    <div class="relative h-64 w-full"><canvas id="priceChart"></canvas></div>
+                </div>
+                
+                <!-- Çeyreklik Gelir ve Kâr Grafiği -->
+                <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Son 4 Çeyrek Finansalları</h3>
+                    <div class="relative h-64 w-full"><canvas id="quarterlyChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Tablolar (Mali Tablolar & Bilanço) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 3 Yıllık Mali Tablo -->
+                <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 overflow-x-auto">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Yıllık Gelir Tablosu & FCF</h3>
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-500">
+                                <th class="py-2 font-medium">Kalem (Milyar USD)</th>
+                                <th class="py-2 font-medium">2021</th>
+                                <th class="py-2 font-medium">2022</th>
+                                <th class="py-2 font-medium">2023</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Gelir</td><td class="py-3 text-white">365.8</td><td class="py-3 text-white">394.3</td><td class="py-3 text-white">383.2</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Brüt Kâr</td><td class="py-3 text-white">152.8</td><td class="py-3 text-white">170.7</td><td class="py-3 text-white">169.1</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Faaliyet Kârı</td><td class="py-3 text-white">108.9</td><td class="py-3 text-white">119.4</td><td class="py-3 text-white">114.3</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Net Kâr</td><td class="py-3 text-white">94.6</td><td class="py-3 text-white">99.8</td><td class="py-3 text-white">96.9</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Serbest Nakit Akışı (FCF)</td><td class="py-3 text-emerald-400">92.9</td><td class="py-3 text-emerald-400">111.4</td><td class="py-3 text-emerald-400">99.5</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bilanço Özeti -->
+                <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 overflow-x-auto">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Bilanço Özeti (Son Çeyrek)</h3>
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-500">
+                                <th class="py-2 font-medium">Bilanço Kalemi</th>
+                                <th class="py-2 font-medium">Değer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Toplam Varlıklar</td><td class="py-3 text-white font-medium">$352.5B</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Toplam Özkaynak (Equity)</td><td class="py-3 text-white font-medium">$62.1B</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Nakit ve Nakit Benzerleri</td><td class="py-3 text-emerald-400 font-medium">$61.5B</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Kısa Vadeli Borç</td><td class="py-3 text-red-400 font-medium">$15.8B</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="py-3 text-slate-300">Uzun Vadeli Borç</td><td class="py-3 text-red-400 font-medium">$95.2B</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Çizgi Grafiği (Fiyat Trendi) ---
+        const ctxPrice = document.getElementById('priceChart').getContext('2d');
+        const priceGradient = ctxPrice.createLinearGradient(0, 0, 0, 300);
+        priceGradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); // Blue
+        priceGradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        new Chart(ctxPrice, {
+            type: 'line',
+            data: {
+                labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'],
+                datasets: [{
+                    data: [135, 142, 138, 148, 145, 150.25],
+                    borderColor: '#3b82f6', // blue-500
+                    backgroundColor: priceGradient,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0f172a',
+                    pointBorderColor: '#3b82f6',
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.3 
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#334155', borderDash: [3, 3] }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+
+        // --- 2. Sütun Grafiği (Çeyreklik Gelir/Kâr) ---
+        const ctxQuarterly = document.getElementById('quarterlyChart').getContext('2d');
+        new Chart(ctxQuarterly, {
+            type: 'bar',
+            data: {
+                labels: ['Q3 22', 'Q4 22', 'Q1 23', 'Q2 23'],
+                datasets: [
+                    {
+                        label: 'Gelir',
+                        data: [90.1, 117.1, 94.8, 81.8],
+                        backgroundColor: '#3b82f6', // blue-500
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Net Kâr',
+                        data: [20.7, 29.9, 24.1, 19.8],
+                        backgroundColor: '#10b981', // emerald-500
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    y: { grid: { color: '#334155', borderDash: [3, 3] }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
