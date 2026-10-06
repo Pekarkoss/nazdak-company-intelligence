@@ -1,0 +1,36 @@
+{
+  "name": "nazdak-company-intelligence",
+  "version": "1.0.0",
+  "description": "A zero-built, CI/CD-compatible financial intelligence dashboard powered by PostgreSQL and Next.js.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pekarkoss/nazdak-company-intelligence.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Pekarkoss/nazdak-company-intelligence/issues"
+  },
+  "homepage": "https://github.com/Pekarkoss/nazdak-company-intelligence#readme",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "dotenv": "^18.0.4",
+    "pg": "^8.23.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/pg": "^8.23.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  }
+}

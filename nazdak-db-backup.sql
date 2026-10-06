@@ -1,0 +1,2622 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict DTv3kVRYJb708BiY4HYMaVPYAFim9E2OGTPtaMOoGrmc29HnRuBbDdLZ7SyINUm
+
+-- Dumped from database version 18.6
+-- Dumped by pg_dump version 18.6
+
+-- Started on 2026-10-06 14:21:07
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 7 (class 2615 OID 24588)
+-- Name: dwh; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+CREATE SCHEMA dwh;
+
+
+ALTER SCHEMA dwh OWNER TO postgres;
+
+--
+-- TOC entry 6 (class 2615 OID 24576)
+-- Name: stg; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+CREATE SCHEMA stg;
+
+
+ALTER SCHEMA stg OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 232 (class 1259 OID 24590)
+-- Name: dimstock; Type: TABLE; Schema: dwh; Owner: postgres
+--
+
+CREATE TABLE dwh.dimstock (
+    stocksurrogatekey integer NOT NULL,
+    symbol character varying(10) NOT NULL,
+    companyname character varying(100),
+    sector character varying(50),
+    validfrom timestamp without time zone NOT NULL,
+    validto timestamp without time zone,
+    isactive boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE dwh.dimstock OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 24589)
+-- Name: dimstock_stocksurrogatekey_seq; Type: SEQUENCE; Schema: dwh; Owner: postgres
+--
+
+CREATE SEQUENCE dwh.dimstock_stocksurrogatekey_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE dwh.dimstock_stocksurrogatekey_seq OWNER TO postgres;
+
+--
+-- TOC entry 5134 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: dimstock_stocksurrogatekey_seq; Type: SEQUENCE OWNED BY; Schema: dwh; Owner: postgres
+--
+
+ALTER SEQUENCE dwh.dimstock_stocksurrogatekey_seq OWNED BY dwh.dimstock.stocksurrogatekey;
+
+
+--
+-- TOC entry 236 (class 1259 OID 24639)
+-- Name: factfinancials; Type: TABLE; Schema: dwh; Owner: postgres
+--
+
+CREATE TABLE dwh.factfinancials (
+    financialid integer NOT NULL,
+    stocksurrogatekey integer NOT NULL,
+    periodname character varying(10) NOT NULL,
+    revenue numeric(18,4),
+    netincome numeric(18,4),
+    freecashflow numeric(18,4),
+    pe_ratio numeric(18,2),
+    growthrate numeric(5,2),
+    marketcap numeric(18,4),
+    insertdate timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE dwh.factfinancials OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1259 OID 24638)
+-- Name: factfinancials_financialid_seq; Type: SEQUENCE; Schema: dwh; Owner: postgres
+--
+
+CREATE SEQUENCE dwh.factfinancials_financialid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE dwh.factfinancials_financialid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5135 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: factfinancials_financialid_seq; Type: SEQUENCE OWNED BY; Schema: dwh; Owner: postgres
+--
+
+ALTER SEQUENCE dwh.factfinancials_financialid_seq OWNED BY dwh.factfinancials.financialid;
+
+
+--
+-- TOC entry 234 (class 1259 OID 24602)
+-- Name: factstockprices; Type: TABLE; Schema: dwh; Owner: postgres
+--
+
+CREATE TABLE dwh.factstockprices (
+    factid integer NOT NULL,
+    stocksurrogatekey integer NOT NULL,
+    tradedate date NOT NULL,
+    openprice numeric(18,4),
+    highprice numeric(18,4),
+    lowprice numeric(18,4),
+    closeprice numeric(18,4),
+    volume bigint,
+    insertdate timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE dwh.factstockprices OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1259 OID 24601)
+-- Name: factstockprices_factid_seq; Type: SEQUENCE; Schema: dwh; Owner: postgres
+--
+
+CREATE SEQUENCE dwh.factstockprices_factid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE dwh.factstockprices_factid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5136 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: factstockprices_factid_seq; Type: SEQUENCE OWNED BY; Schema: dwh; Owner: postgres
+--
+
+ALTER SEQUENCE dwh.factstockprices_factid_seq OWNED BY dwh.factstockprices.factid;
+
+
+--
+-- TOC entry 239 (class 1259 OID 24662)
+-- Name: synclog; Type: TABLE; Schema: dwh; Owner: postgres
+--
+
+CREATE TABLE dwh.synclog (
+    syncid integer NOT NULL,
+    symbol character varying(10) NOT NULL,
+    synctype character varying(20) NOT NULL,
+    syncdate date NOT NULL,
+    status character varying(20) NOT NULL,
+    recordsaffected integer DEFAULT 0,
+    executiontime timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    errormessage text
+);
+
+
+ALTER TABLE dwh.synclog OWNER TO postgres;
+
+--
+-- TOC entry 238 (class 1259 OID 24661)
+-- Name: synclog_syncid_seq; Type: SEQUENCE; Schema: dwh; Owner: postgres
+--
+
+CREATE SEQUENCE dwh.synclog_syncid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE dwh.synclog_syncid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5137 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: synclog_syncid_seq; Type: SEQUENCE OWNED BY; Schema: dwh; Owner: postgres
+--
+
+ALTER SEQUENCE dwh.synclog_syncid_seq OWNED BY dwh.synclog.syncid;
+
+
+--
+-- TOC entry 240 (class 1259 OID 24707)
+-- Name: vw_stockdailydashboard; Type: VIEW; Schema: dwh; Owner: postgres
+--
+
+CREATE VIEW dwh.vw_stockdailydashboard AS
+ WITH rankedprices AS (
+         SELECT d.symbol,
+            d.companyname,
+            d.sector,
+            f.tradedate,
+            f.openprice,
+            f.highprice,
+            f.lowprice,
+            f.closeprice AS currentprice,
+            lag(f.closeprice) OVER (PARTITION BY d.symbol ORDER BY f.tradedate) AS prevprice,
+            row_number() OVER (PARTITION BY d.symbol ORDER BY f.tradedate DESC) AS rn
+           FROM (dwh.factstockprices f
+             JOIN dwh.dimstock d ON ((f.stocksurrogatekey = d.stocksurrogatekey)))
+          WHERE (d.isactive = true)
+        )
+ SELECT symbol,
+    companyname,
+    sector,
+    tradedate,
+    round((openprice)::numeric, 4) AS openprice,
+    round((highprice)::numeric, 4) AS highprice,
+    round((lowprice)::numeric, 4) AS lowprice,
+    round((currentprice)::numeric, 4) AS currentprice,
+    round(prevprice, 4) AS prevprice,
+    round((currentprice - prevprice), 2) AS changevalue,
+    round((((currentprice - prevprice) / prevprice) * (100)::numeric), 2) AS changepct,
+        CASE
+            WHEN ((currentprice - prevprice) >= (0)::numeric) THEN 1
+            ELSE 0
+        END AS isgreen_dailychange
+   FROM rankedprices
+  WHERE ((rn = 1) AND (prevprice IS NOT NULL));
+
+
+ALTER VIEW dwh.vw_stockdailydashboard OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 24656)
+-- Name: vw_stockfinancialanalysis; Type: VIEW; Schema: dwh; Owner: postgres
+--
+
+CREATE VIEW dwh.vw_stockfinancialanalysis AS
+ WITH latestfinancials AS (
+         SELECT factfinancials.stocksurrogatekey,
+            factfinancials.periodname,
+            factfinancials.revenue,
+            factfinancials.netincome,
+            factfinancials.freecashflow,
+            factfinancials.pe_ratio,
+            factfinancials.growthrate,
+            factfinancials.marketcap,
+            row_number() OVER (PARTITION BY factfinancials.stocksurrogatekey ORDER BY factfinancials.periodname DESC) AS rn
+           FROM dwh.factfinancials
+        ), sectoraverages AS (
+         SELECT d_1.sector,
+            avg(lf_1.pe_ratio) AS avgpe,
+            avg(lf_1.growthrate) AS avggrowth
+           FROM (latestfinancials lf_1
+             JOIN dwh.dimstock d_1 ON ((lf_1.stocksurrogatekey = d_1.stocksurrogatekey)))
+          WHERE (lf_1.rn = 1)
+          GROUP BY d_1.sector
+        )
+ SELECT d.symbol,
+    d.companyname,
+    d.sector,
+    lf.periodname,
+    lf.revenue,
+    lf.netincome,
+    lf.freecashflow,
+    lf.pe_ratio,
+    lf.growthrate,
+        CASE
+            WHEN (lf.pe_ratio <= sa.avgpe) THEN 1
+            ELSE 0
+        END AS isgreen_pe,
+        CASE
+            WHEN (lf.growthrate >= sa.avggrowth) THEN 1
+            ELSE 0
+        END AS isgreen_growth,
+        CASE
+            WHEN (lf.netincome > (0)::numeric) THEN 1
+            ELSE 0
+        END AS isgreen_netincome
+   FROM ((latestfinancials lf
+     JOIN dwh.dimstock d ON ((lf.stocksurrogatekey = d.stocksurrogatekey)))
+     JOIN sectoraverages sa ON (((d.sector)::text = (sa.sector)::text)))
+  WHERE ((lf.rn = 1) AND (d.isactive = true));
+
+
+ALTER VIEW dwh.vw_stockfinancialanalysis OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 16389)
+-- Name: companies; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.companies (
+    symbol character varying(10) NOT NULL,
+    company_name character varying(100) NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.companies OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 16453)
+-- Name: daily_stock_prices; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.daily_stock_prices (
+    id integer NOT NULL,
+    symbol character varying(10),
+    trade_date date NOT NULL,
+    open_price numeric,
+    high_price numeric,
+    low_price numeric,
+    close_price numeric,
+    volume bigint,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.daily_stock_prices OWNER TO postgres;
+
+--
+-- TOC entry 222 (class 1259 OID 16452)
+-- Name: daily_stock_prices_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.daily_stock_prices_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.daily_stock_prices_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5138 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: daily_stock_prices_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.daily_stock_prices_id_seq OWNED BY public.daily_stock_prices.id;
+
+
+--
+-- TOC entry 227 (class 1259 OID 16491)
+-- Name: financial_metrics; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.financial_metrics (
+    id integer NOT NULL,
+    symbol character varying(10),
+    last_price numeric,
+    daily_change_pct numeric,
+    revenue_ttm numeric,
+    revenue_growth numeric,
+    gross_profit_margin numeric,
+    operating_margin numeric,
+    net_profit_margin numeric,
+    free_cash_flow numeric,
+    total_debt numeric,
+    pe_ratio numeric,
+    is_active boolean DEFAULT true,
+    valid_from timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    valid_to timestamp without time zone DEFAULT '9999-12-31 23:59:59'::timestamp without time zone
+);
+
+
+ALTER TABLE public.financial_metrics OWNER TO postgres;
+
+--
+-- TOC entry 226 (class 1259 OID 16490)
+-- Name: financial_metrics_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.financial_metrics_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.financial_metrics_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5139 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: financial_metrics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.financial_metrics_id_seq OWNED BY public.financial_metrics.id;
+
+
+--
+-- TOC entry 225 (class 1259 OID 16472)
+-- Name: quarterly_financials; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.quarterly_financials (
+    id integer NOT NULL,
+    symbol character varying(10),
+    fiscal_date_ending date NOT NULL,
+    reported_currency character varying(10),
+    total_revenue numeric,
+    net_income numeric,
+    operating_income numeric,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.quarterly_financials OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1259 OID 16471)
+-- Name: quarterly_financials_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.quarterly_financials_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.quarterly_financials_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5140 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: quarterly_financials_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.quarterly_financials_id_seq OWNED BY public.quarterly_financials.id;
+
+
+--
+-- TOC entry 228 (class 1259 OID 16508)
+-- Name: vw_company_scores; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.vw_company_scores AS
+ WITH active_metrics AS (
+         SELECT financial_metrics.symbol,
+            financial_metrics.pe_ratio,
+            financial_metrics.revenue_ttm,
+            financial_metrics.net_profit_margin,
+            financial_metrics.free_cash_flow
+           FROM public.financial_metrics
+          WHERE (financial_metrics.is_active = true)
+        )
+ SELECT m1.symbol AS company_a,
+    m2.symbol AS company_b,
+    (((
+        CASE
+            WHEN (m1.net_profit_margin > m2.net_profit_margin) THEN 3
+            ELSE 0
+        END +
+        CASE
+            WHEN (m1.revenue_ttm > m2.revenue_ttm) THEN 2
+            ELSE 0
+        END) +
+        CASE
+            WHEN (m1.pe_ratio < m2.pe_ratio) THEN 2
+            ELSE 0
+        END) +
+        CASE
+            WHEN (m1.free_cash_flow > m2.free_cash_flow) THEN 1
+            ELSE 0
+        END) AS score_a,
+    (((
+        CASE
+            WHEN (m2.net_profit_margin > m1.net_profit_margin) THEN 3
+            ELSE 0
+        END +
+        CASE
+            WHEN (m2.revenue_ttm > m1.revenue_ttm) THEN 2
+            ELSE 0
+        END) +
+        CASE
+            WHEN (m2.pe_ratio < m1.pe_ratio) THEN 2
+            ELSE 0
+        END) +
+        CASE
+            WHEN (m2.free_cash_flow > m1.free_cash_flow) THEN 1
+            ELSE 0
+        END) AS score_b
+   FROM (active_metrics m1
+     CROSS JOIN active_metrics m2)
+  WHERE ((m1.symbol)::text <> (m2.symbol)::text);
+
+
+ALTER VIEW public.vw_company_scores OWNER TO postgres;
+
+--
+-- TOC entry 230 (class 1259 OID 24578)
+-- Name: stockprices_ohlc; Type: TABLE; Schema: stg; Owner: postgres
+--
+
+CREATE TABLE stg.stockprices_ohlc (
+    stagingid integer NOT NULL,
+    symbol character varying(10) NOT NULL,
+    tradedate date NOT NULL,
+    openprice numeric(18,4),
+    highprice numeric(18,4),
+    lowprice numeric(18,4),
+    closeprice numeric(18,4),
+    volume bigint,
+    loaddate timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE stg.stockprices_ohlc OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 24577)
+-- Name: stockprices_ohlc_stagingid_seq; Type: SEQUENCE; Schema: stg; Owner: postgres
+--
+
+CREATE SEQUENCE stg.stockprices_ohlc_stagingid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE stg.stockprices_ohlc_stagingid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5141 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: stockprices_ohlc_stagingid_seq; Type: SEQUENCE OWNED BY; Schema: stg; Owner: postgres
+--
+
+ALTER SEQUENCE stg.stockprices_ohlc_stagingid_seq OWNED BY stg.stockprices_ohlc.stagingid;
+
+
+--
+-- TOC entry 4920 (class 2604 OID 24593)
+-- Name: dimstock stocksurrogatekey; Type: DEFAULT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.dimstock ALTER COLUMN stocksurrogatekey SET DEFAULT nextval('dwh.dimstock_stocksurrogatekey_seq'::regclass);
+
+
+--
+-- TOC entry 4924 (class 2604 OID 24642)
+-- Name: factfinancials financialid; Type: DEFAULT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factfinancials ALTER COLUMN financialid SET DEFAULT nextval('dwh.factfinancials_financialid_seq'::regclass);
+
+
+--
+-- TOC entry 4922 (class 2604 OID 24605)
+-- Name: factstockprices factid; Type: DEFAULT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factstockprices ALTER COLUMN factid SET DEFAULT nextval('dwh.factstockprices_factid_seq'::regclass);
+
+
+--
+-- TOC entry 4926 (class 2604 OID 24665)
+-- Name: synclog syncid; Type: DEFAULT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.synclog ALTER COLUMN syncid SET DEFAULT nextval('dwh.synclog_syncid_seq'::regclass);
+
+
+--
+-- TOC entry 4910 (class 2604 OID 16456)
+-- Name: daily_stock_prices id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.daily_stock_prices ALTER COLUMN id SET DEFAULT nextval('public.daily_stock_prices_id_seq'::regclass);
+
+
+--
+-- TOC entry 4914 (class 2604 OID 16494)
+-- Name: financial_metrics id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.financial_metrics ALTER COLUMN id SET DEFAULT nextval('public.financial_metrics_id_seq'::regclass);
+
+
+--
+-- TOC entry 4912 (class 2604 OID 16475)
+-- Name: quarterly_financials id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quarterly_financials ALTER COLUMN id SET DEFAULT nextval('public.quarterly_financials_id_seq'::regclass);
+
+
+--
+-- TOC entry 4918 (class 2604 OID 24581)
+-- Name: stockprices_ohlc stagingid; Type: DEFAULT; Schema: stg; Owner: postgres
+--
+
+ALTER TABLE ONLY stg.stockprices_ohlc ALTER COLUMN stagingid SET DEFAULT nextval('stg.stockprices_ohlc_stagingid_seq'::regclass);
+
+
+--
+-- TOC entry 5122 (class 0 OID 24590)
+-- Dependencies: 232
+-- Data for Name: dimstock; Type: TABLE DATA; Schema: dwh; Owner: postgres
+--
+
+COPY dwh.dimstock (stocksurrogatekey, symbol, companyname, sector, validfrom, validto, isactive) FROM stdin;
+1	AAPL	Apple Inc.	Technology	2026-09-28 13:51:21.905762	\N	t
+2	MSFT	Microsoft Corp.	Technology	2026-09-28 13:55:52.000469	\N	t
+3	NVDA	NVIDIA Corp.	Semiconductors	2026-09-28 13:56:07.540228	\N	t
+4	TSLA	Tesla Inc.	Automotive	2026-09-28 13:56:23.157493	\N	t
+5	GOOGL	Alphabet Inc.	Communication Services	2026-09-28 13:56:38.705688	\N	t
+\.
+
+
+--
+-- TOC entry 5126 (class 0 OID 24639)
+-- Dependencies: 236
+-- Data for Name: factfinancials; Type: TABLE DATA; Schema: dwh; Owner: postgres
+--
+
+COPY dwh.factfinancials (financialid, stocksurrogatekey, periodname, revenue, netincome, freecashflow, pe_ratio, growthrate, marketcap, insertdate) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5124 (class 0 OID 24602)
+-- Dependencies: 234
+-- Data for Name: factstockprices; Type: TABLE DATA; Schema: dwh; Owner: postgres
+--
+
+COPY dwh.factstockprices (factid, stocksurrogatekey, tradedate, openprice, highprice, lowprice, closeprice, volume, insertdate) FROM stdin;
+4	1	2026-09-22	340.1350	345.3400	338.7500	339.7500	40711786	2026-09-28 13:55:36.460979
+5	1	2026-09-21	335.2800	339.6400	333.0500	338.9800	34999229	2026-09-28 13:55:36.460979
+6	1	2026-09-18	337.9050	338.4900	332.5300	336.1300	86588203	2026-09-28 13:55:36.460979
+7	1	2026-09-17	334.7700	338.3400	330.1833	337.0000	36700225	2026-09-28 13:55:36.460979
+8	1	2026-09-16	332.5300	335.4800	330.7000	332.4100	35981000	2026-09-28 13:55:36.460979
+9	1	2026-09-15	330.1350	331.7800	328.3500	331.3400	31748183	2026-09-28 13:55:36.460979
+10	1	2026-09-14	334.7900	335.5000	331.3400	333.0800	39269147	2026-09-28 13:55:36.460979
+11	1	2026-09-11	327.4500	336.2200	326.3000	332.2700	50716865	2026-09-28 13:55:36.460979
+12	1	2026-09-10	316.6700	326.7400	316.5100	326.5700	70011913	2026-09-28 13:55:36.460979
+13	1	2026-09-09	315.4850	319.1500	309.9000	315.3400	65639962	2026-09-28 13:55:36.460979
+14	1	2026-09-08	317.1000	320.7000	314.9000	316.2200	35477090	2026-09-28 13:55:36.460979
+15	1	2026-09-04	328.3050	328.9300	317.8600	319.9700	39606884	2026-09-28 13:55:36.460979
+16	1	2026-09-03	324.8700	330.8100	324.1100	328.2100	37225838	2026-09-28 13:55:36.460979
+17	1	2026-09-02	326.8650	328.4000	323.5300	324.9600	33776370	2026-09-28 13:55:36.460979
+18	1	2026-09-01	316.9800	327.3000	314.7300	325.1300	53167388	2026-09-28 13:55:36.460979
+19	1	2026-08-31	319.6000	321.2350	312.8000	316.8500	41242724	2026-09-28 13:55:36.460979
+20	1	2026-08-28	316.8450	322.3700	315.4504	319.7000	38649398	2026-09-28 13:55:36.460979
+21	1	2026-08-27	310.5450	315.4000	309.4001	314.5800	32419233	2026-09-28 13:55:36.460979
+22	1	2026-08-26	310.3000	315.4300	308.8001	313.4500	34024486	2026-09-28 13:55:36.460979
+23	1	2026-08-25	310.7900	313.5900	308.2100	309.9000	25869807	2026-09-28 13:55:36.460979
+24	1	2026-08-24	311.4700	313.3600	309.9700	310.3400	34673582	2026-09-28 13:55:36.460979
+25	1	2026-08-21	312.0500	312.3800	307.0100	309.3500	46876815	2026-09-28 13:55:36.460979
+26	1	2026-08-20	317.4550	320.2800	310.6500	311.3000	40959184	2026-09-28 13:55:36.460979
+27	1	2026-08-19	310.1400	319.2799	309.6000	316.8300	50505646	2026-09-28 13:55:36.460979
+28	1	2026-08-18	307.5800	311.4900	305.7400	310.0300	53424535	2026-09-28 13:55:36.460979
+29	1	2026-08-17	306.2100	307.6600	302.9390	305.5900	38169263	2026-09-28 13:55:36.460979
+30	1	2026-08-14	306.0000	307.4900	304.3000	305.9300	28229375	2026-09-28 13:55:36.460979
+31	1	2026-08-13	304.2100	306.0000	302.0500	305.2600	40349289	2026-09-28 13:55:36.460979
+32	1	2026-08-12	305.1000	305.6600	300.5700	302.2500	41657768	2026-09-28 13:55:36.460979
+33	1	2026-08-11	307.7500	309.9700	302.7900	304.9100	37476746	2026-09-28 13:55:36.460979
+34	1	2026-08-10	306.8300	308.2600	304.6100	308.2600	44812503	2026-09-28 13:55:36.460979
+35	1	2026-08-07	311.4500	314.8100	310.7400	313.3300	34437191	2026-09-28 13:55:36.460979
+36	1	2026-08-06	314.3400	316.2894	309.2300	312.4100	46139901	2026-09-28 13:55:36.460979
+37	1	2026-08-05	309.3600	311.7100	305.6700	311.0000	49438763	2026-09-28 13:55:36.460979
+38	1	2026-08-04	302.7250	310.4200	301.3200	309.3800	68000969	2026-09-28 13:55:36.460979
+39	1	2026-08-03	309.5800	311.8000	302.5600	303.4200	75051951	2026-09-28 13:55:36.460979
+40	1	2026-07-31	304.8100	310.6900	300.0000	308.9100	132489137	2026-09-28 13:55:36.460979
+41	1	2026-07-30	333.1000	334.7500	329.5900	333.4300	74817792	2026-09-28 13:55:36.460979
+42	1	2026-07-29	339.7300	344.5699	337.3501	338.1900	56090840	2026-09-28 13:55:36.460979
+43	1	2026-07-28	340.0300	342.8900	335.6000	340.0800	51859042	2026-09-28 13:55:36.460979
+44	1	2026-07-27	334.5400	339.5700	334.0200	336.9100	49604297	2026-09-28 13:55:36.460979
+45	1	2026-07-24	321.7900	334.3700	321.6200	333.0200	47489415	2026-09-28 13:55:36.460979
+46	1	2026-07-23	321.7300	323.3000	319.3500	321.6600	40840778	2026-09-28 13:55:36.460979
+47	1	2026-07-22	327.8700	328.9995	323.3400	325.8900	38755929	2026-09-28 13:55:36.460979
+48	1	2026-07-21	323.1300	329.6000	322.2204	327.7400	41338917	2026-09-28 13:55:36.460979
+49	1	2026-07-20	333.5050	333.7100	323.6800	326.5900	53468008	2026-09-28 13:55:36.460979
+50	1	2026-07-17	331.9800	334.9900	329.0006	333.7400	63407059	2026-09-28 13:55:36.460979
+51	1	2026-07-16	328.0050	334.6800	326.7900	333.2600	62970617	2026-09-28 13:55:36.460979
+52	1	2026-07-15	317.6150	328.7300	317.3200	327.5000	60957644	2026-09-28 13:55:36.460979
+53	1	2026-07-14	313.7600	316.1900	311.9100	314.8600	36336829	2026-09-28 13:55:36.460979
+54	1	2026-07-13	317.0150	323.4500	315.7800	317.3100	43257804	2026-09-28 13:55:36.460979
+55	1	2026-07-10	314.7200	316.9100	312.1700	315.3200	34132321	2026-09-28 13:55:36.460979
+56	1	2026-07-09	310.5100	316.5300	308.1600	316.2200	48124490	2026-09-28 13:55:36.460979
+57	1	2026-07-08	311.9100	314.8200	307.0500	313.3900	41323480	2026-09-28 13:55:36.460979
+58	1	2026-07-07	315.2900	315.4800	310.1500	310.6600	42490002	2026-09-28 13:55:36.460979
+59	1	2026-07-06	307.3600	314.2000	307.0000	312.6600	53589977	2026-09-28 13:55:36.460979
+60	1	2026-07-02	294.1200	309.4200	293.6800	308.6300	75400626	2026-09-28 13:55:36.460979
+61	1	2026-07-01	293.4400	296.5900	289.1950	294.3800	50164232	2026-09-28 13:55:36.460979
+62	1	2026-06-30	281.1700	289.9400	280.6950	289.3600	65100155	2026-09-28 13:55:36.460979
+63	1	2026-06-29	286.7300	288.3697	279.8500	281.7400	66427002	2026-09-28 13:55:36.460979
+64	1	2026-06-26	275.0000	285.9500	274.2100	283.7800	261775450	2026-09-28 13:55:36.460979
+65	1	2026-06-25	287.4000	288.8000	273.7500	275.1500	107253659	2026-09-28 13:55:36.460979
+66	1	2026-06-24	295.3550	299.7000	292.9400	293.0800	53081859	2026-09-28 13:55:36.460979
+67	1	2026-06-23	297.5380	301.6400	294.1800	294.3000	52010929	2026-09-28 13:55:36.460979
+68	1	2026-06-22	297.3100	302.4200	296.7600	297.0100	44879914	2026-09-28 13:55:36.460979
+69	1	2026-06-18	298.1100	300.5700	295.6200	298.0100	85962201	2026-09-28 13:55:36.460979
+70	1	2026-06-17	300.8450	302.0700	294.3600	295.9500	42745060	2026-09-28 13:55:36.460979
+71	1	2026-06-16	295.2450	300.4800	293.9700	299.2400	39874404	2026-09-28 13:55:36.460979
+72	1	2026-06-15	294.1200	297.7800	291.7000	296.4200	45732573	2026-09-28 13:55:36.460979
+73	1	2026-06-12	296.0300	297.1400	289.6200	291.1300	38784789	2026-09-28 13:55:36.460979
+74	1	2026-06-11	293.7200	297.0000	289.5900	295.6300	42572497	2026-09-28 13:55:36.460979
+75	1	2026-06-10	290.7400	294.7500	287.3800	291.5800	52793266	2026-09-28 13:55:36.460979
+76	1	2026-06-09	300.2750	300.7500	287.7800	290.5500	70108847	2026-09-28 13:55:36.460979
+77	1	2026-06-08	308.7390	317.4000	301.1700	301.5400	77949082	2026-09-28 13:55:36.460979
+78	1	2026-06-05	312.8600	315.1700	307.1500	307.3400	65310502	2026-09-28 13:55:36.460979
+79	1	2026-06-04	313.2300	313.5400	309.6500	311.2300	44869134	2026-09-28 13:55:36.460979
+80	1	2026-06-03	314.1750	316.9400	308.8500	310.2600	50836705	2026-09-28 13:55:36.460979
+81	1	2026-06-02	307.4600	315.4500	306.6850	315.2000	44534716	2026-09-28 13:55:36.460979
+82	1	2026-06-01	309.6250	310.9400	305.0200	306.3100	48849933	2026-09-28 13:55:36.460979
+83	1	2026-05-29	311.7750	315.0000	309.5300	312.0600	70026752	2026-09-28 13:55:36.460979
+84	1	2026-05-28	310.6800	312.8000	309.5700	312.5100	48220390	2026-09-28 13:55:36.460979
+85	1	2026-05-27	308.3300	313.2600	308.3000	310.8500	50430919	2026-09-28 13:55:36.460979
+86	1	2026-05-26	309.5600	311.8200	307.6700	308.3300	48000493	2026-09-28 13:55:36.460979
+87	1	2026-05-22	306.1200	311.4000	305.8400	308.8200	43670223	2026-09-28 13:55:36.460979
+88	1	2026-05-21	301.0550	305.5400	300.4000	304.9900	42965126	2026-09-28 13:55:36.460979
+89	1	2026-05-20	298.1800	302.8000	298.0800	302.2500	37307876	2026-09-28 13:55:36.460979
+90	1	2026-05-19	296.9700	300.5100	296.3500	298.9700	42243561	2026-09-28 13:55:36.460979
+91	1	2026-05-18	300.2400	300.6600	294.9100	297.8400	34482959	2026-09-28 13:55:36.460979
+92	1	2026-05-15	297.9000	303.2000	296.5200	300.2300	54862836	2026-09-28 13:55:36.460979
+93	1	2026-05-14	299.8200	300.4500	295.3800	298.2100	35324922	2026-09-28 13:55:36.460979
+94	1	2026-05-13	293.5000	300.9200	293.5000	298.8700	52684260	2026-09-28 13:55:36.460979
+301	2	2026-09-25	499.0350	519.4000	497.2500	516.1700	38193112	2026-09-28 13:55:52.000469
+302	2	2026-09-24	495.0700	498.9000	491.2200	497.9300	16657643	2026-09-28 13:55:52.000469
+303	2	2026-09-23	500.7550	509.4400	495.8800	500.5900	19445555	2026-09-28 13:55:52.000469
+304	2	2026-09-22	507.3200	508.5000	493.6500	498.0000	21652838	2026-09-28 13:55:52.000469
+305	2	2026-09-21	494.9450	501.8700	491.3300	501.6100	27959944	2026-09-28 13:55:52.000469
+306	2	2026-09-18	497.9650	498.6500	491.1000	493.7800	39622288	2026-09-28 13:55:52.000469
+1	1	2026-09-25	336.0400	341.6700	334.5300	341.0700	30002507	2026-09-28 13:55:36.460979
+2	1	2026-09-24	336.7200	338.9100	334.3000	335.9200	24733098	2026-09-28 13:55:36.460979
+3	1	2026-09-23	341.0750	341.8000	335.5000	337.0200	31658823	2026-09-28 13:55:36.460979
+401	3	2026-09-25	225.1300	226.9400	223.1329	225.0700	89947712	2026-09-28 13:56:07.540228
+402	3	2026-09-24	222.0800	224.9400	221.0900	224.5800	77469856	2026-09-28 13:56:07.540228
+403	3	2026-09-23	228.0300	228.9500	224.0200	225.5100	89547290	2026-09-28 13:56:07.540228
+404	3	2026-09-22	226.8500	229.9800	226.5000	228.8700	95746745	2026-09-28 13:56:07.540228
+405	3	2026-09-21	222.9350	228.5000	221.5600	227.3800	109806067	2026-09-28 13:56:07.540228
+406	3	2026-09-18	219.3500	222.7300	218.0300	222.2700	190287428	2026-09-28 13:56:07.540228
+407	3	2026-09-17	218.3750	219.9050	217.1450	219.3400	94191263	2026-09-28 13:56:07.540228
+408	3	2026-09-16	214.1400	216.7600	212.5000	213.9000	96563590	2026-09-28 13:56:07.540228
+409	3	2026-09-15	213.3750	213.9400	211.1600	212.1700	88059658	2026-09-28 13:56:07.540228
+410	3	2026-09-14	211.2400	212.7700	208.9300	210.9600	132267244	2026-09-28 13:56:07.540228
+411	3	2026-09-11	221.2350	222.0000	218.1500	218.2900	89060140	2026-09-28 13:56:07.540228
+412	3	2026-09-10	220.5250	220.9900	217.2000	218.3600	105768001	2026-09-28 13:56:07.540228
+413	3	2026-09-09	225.2750	226.1800	223.4600	223.6700	82955478	2026-09-28 13:56:07.540228
+414	3	2026-09-08	233.1100	233.7100	224.8500	225.7300	122965555	2026-09-28 13:56:07.540228
+415	3	2026-09-04	231.0900	234.7600	229.6300	230.3600	135352420	2026-09-28 13:56:07.540228
+416	3	2026-09-03	226.0200	230.4000	224.7500	228.4500	134681610	2026-09-28 13:56:07.540228
+417	3	2026-09-02	218.7850	227.9500	218.4800	224.4100	157104683	2026-09-28 13:56:07.540228
+418	3	2026-09-01	216.7500	220.4100	215.1000	217.4400	109756184	2026-09-28 13:56:07.540228
+419	3	2026-08-31	218.8700	221.3000	216.2100	220.7800	124702660	2026-09-28 13:56:07.540228
+420	3	2026-08-28	227.3600	229.2600	216.8100	217.5500	195116417	2026-09-28 13:56:07.540228
+421	3	2026-08-27	222.8600	230.4700	220.9000	227.9800	298909822	2026-09-28 13:56:07.540228
+422	3	2026-08-26	212.6400	213.6000	209.2300	209.6600	179900003	2026-09-28 13:56:07.540228
+423	3	2026-08-25	211.0250	214.7300	210.1100	213.0500	122309019	2026-09-28 13:56:07.540228
+424	3	2026-08-24	215.5300	215.5900	207.2500	208.4800	135187288	2026-09-28 13:56:07.540228
+425	3	2026-08-21	218.4200	218.7400	214.5000	214.7200	98869300	2026-09-28 13:56:07.540228
+426	3	2026-08-20	218.3600	219.8600	215.6600	216.8500	92457037	2026-09-28 13:56:07.540228
+427	3	2026-08-19	221.6700	222.8700	216.7600	217.5600	96797314	2026-09-28 13:56:07.540228
+428	3	2026-08-18	220.4500	221.6400	218.6902	219.7400	103128247	2026-09-28 13:56:07.540228
+429	3	2026-08-17	225.9800	227.9200	224.8600	225.0100	93678685	2026-09-28 13:56:07.540228
+430	3	2026-08-14	226.7650	227.4900	224.5000	225.1600	75680870	2026-09-28 13:56:07.540228
+431	3	2026-08-13	225.0550	227.2300	223.7100	225.3000	98867226	2026-09-28 13:56:07.540228
+432	3	2026-08-12	221.0400	225.1000	220.2000	224.0900	108783636	2026-09-28 13:56:07.540228
+433	3	2026-08-11	222.1700	222.2000	216.2000	217.5000	101273148	2026-09-28 13:56:07.540228
+434	3	2026-08-10	223.4000	224.1379	216.7700	217.5500	115846596	2026-09-28 13:56:07.540228
+435	3	2026-08-07	221.5400	224.7600	220.6600	223.9600	105669440	2026-09-28 13:56:07.540228
+436	3	2026-08-06	221.5300	223.6300	217.0000	218.9900	113940644	2026-09-28 13:56:07.540228
+437	3	2026-08-05	216.8600	222.2200	216.4000	219.2200	158187403	2026-09-28 13:56:07.540228
+438	3	2026-08-04	211.3000	213.0600	209.0500	211.9400	134921997	2026-09-28 13:56:07.540228
+439	3	2026-08-03	197.6900	208.7400	196.8500	206.6400	128406883	2026-09-28 13:56:07.540228
+440	3	2026-07-31	198.4405	202.0000	194.9500	200.7500	139961152	2026-09-28 13:56:07.540228
+441	3	2026-07-30	193.4500	197.2500	191.5200	195.0400	129010151	2026-09-28 13:56:07.540228
+442	3	2026-07-29	195.8450	197.0740	190.0100	190.0100	147680809	2026-09-28 13:56:07.540228
+443	3	2026-07-28	195.0000	198.7000	192.7400	197.0100	134111494	2026-09-28 13:56:07.540228
+444	3	2026-07-27	208.2000	208.7500	195.4400	196.5100	154353698	2026-09-28 13:56:07.540228
+445	3	2026-07-24	207.4500	211.9099	204.8100	206.8400	114836805	2026-09-28 13:56:07.540228
+446	3	2026-07-23	209.4550	210.8687	205.9600	208.7600	110505328	2026-09-28 13:56:07.540228
+447	3	2026-07-22	205.8050	214.3900	204.9500	212.0600	137645596	2026-09-28 13:56:07.540228
+448	3	2026-07-21	207.5400	208.6500	204.0100	207.2900	108685563	2026-09-28 13:56:07.540228
+449	3	2026-07-20	205.8700	207.7400	202.2800	203.2800	88701540	2026-09-28 13:56:07.540228
+450	3	2026-07-17	202.6400	206.6450	197.9700	202.8100	144281910	2026-09-28 13:56:07.540228
+451	3	2026-07-16	210.1700	211.0800	205.8450	207.4000	122986074	2026-09-28 13:56:07.540228
+452	3	2026-07-15	211.9600	213.8100	206.0400	212.5000	124797151	2026-09-28 13:56:07.540228
+453	3	2026-07-14	208.2000	212.5500	203.8000	211.8000	124379646	2026-09-28 13:56:07.540228
+454	3	2026-07-13	208.5400	210.5700	203.0000	203.5300	121411018	2026-09-28 13:56:07.540228
+455	3	2026-07-10	202.0000	211.0000	201.9200	210.9600	148421001	2026-09-28 13:56:07.540228
+456	3	2026-07-09	204.4600	204.5850	198.9600	202.7800	132037359	2026-09-28 13:56:07.540228
+457	3	2026-07-08	195.1800	205.1600	195.0600	204.1200	147419133	2026-09-28 13:56:07.540228
+458	3	2026-07-07	192.3700	198.4100	191.1400	196.9300	124154574	2026-09-28 13:56:07.540228
+459	3	2026-07-06	194.4200	197.5500	193.9900	195.5500	108999015	2026-09-28 13:56:07.540228
+460	3	2026-07-02	197.1400	200.0550	192.3500	194.8300	142385548	2026-09-28 13:56:07.540228
+461	3	2026-07-01	196.2000	199.8500	193.4500	197.5800	146147597	2026-09-28 13:56:07.540228
+462	3	2026-06-30	197.2400	200.6300	195.1100	200.0900	166476665	2026-09-28 13:56:07.540228
+463	3	2026-06-29	193.8500	196.1800	189.8000	194.9700	148835724	2026-09-28 13:56:07.540228
+464	3	2026-06-26	193.1200	195.5500	191.2200	192.5300	179304147	2026-09-28 13:56:07.540228
+465	3	2026-06-25	200.0800	200.8000	192.1300	195.7400	150205647	2026-09-28 13:56:07.540228
+466	3	2026-06-24	200.1200	201.6700	196.5800	199.0000	151810704	2026-09-28 13:56:07.540228
+467	3	2026-06-23	202.1700	203.7700	200.0000	200.0400	153496196	2026-09-28 13:56:07.540228
+468	3	2026-06-22	211.4400	213.9900	207.7200	208.6500	122041419	2026-09-28 13:56:07.540228
+469	3	2026-06-18	207.3300	211.3900	206.5000	210.6900	241272013	2026-09-28 13:56:07.540228
+470	3	2026-06-17	208.5300	209.2100	203.0800	204.6500	128363473	2026-09-28 13:56:07.540228
+471	3	2026-06-16	211.1800	211.4900	207.2900	207.4100	125694100	2026-09-28 13:56:07.540228
+472	3	2026-06-15	208.9200	212.7107	208.3400	212.4500	149936688	2026-09-28 13:56:07.540228
+473	3	2026-06-12	204.8600	207.0700	203.4385	205.1900	112345314	2026-09-28 13:56:07.540228
+474	3	2026-06-11	201.4900	205.6600	199.5400	204.8700	158643204	2026-09-28 13:56:07.540228
+475	3	2026-06-10	204.4300	207.2200	199.9200	200.4200	161746587	2026-09-28 13:56:07.540228
+476	3	2026-06-09	210.6150	211.4000	199.3400	208.1900	180962450	2026-09-28 13:56:07.540228
+477	3	2026-06-08	210.1800	210.4700	206.0000	208.6400	138372837	2026-09-28 13:56:07.540228
+478	3	2026-06-05	214.5300	214.8700	204.3300	205.1000	219655531	2026-09-28 13:56:07.540228
+479	3	2026-06-04	213.9050	221.6000	210.9700	218.6600	169022152	2026-09-28 13:56:07.540228
+480	3	2026-06-03	221.7200	222.8200	214.5100	214.7500	160907001	2026-09-28 13:56:07.540228
+481	3	2026-06-02	227.1800	232.2800	221.3500	222.8200	193362903	2026-09-28 13:56:07.540228
+482	3	2026-06-01	215.7300	224.8700	215.7000	224.3600	212850685	2026-09-28 13:56:07.540228
+483	3	2026-05-29	214.5750	217.8599	211.1300	211.1400	289410623	2026-09-28 13:56:07.540228
+484	3	2026-05-28	211.2750	215.5191	211.2200	214.2500	143996048	2026-09-28 13:56:07.540228
+485	3	2026-05-27	214.1200	214.1500	208.7800	212.6000	167601172	2026-09-28 13:56:07.540228
+486	3	2026-05-26	216.5400	218.1800	212.0000	214.8600	187202576	2026-09-28 13:56:07.540228
+487	3	2026-05-22	220.9040	221.0100	214.8000	215.3300	169275710	2026-09-28 13:56:07.540228
+488	3	2026-05-21	222.2900	227.3999	217.9300	219.5100	203381760	2026-09-28 13:56:07.540228
+489	3	2026-05-20	223.1800	226.1300	220.4950	223.4700	162279171	2026-09-28 13:56:07.540228
+490	3	2026-05-19	219.6200	224.4800	217.9100	220.6100	140948207	2026-09-28 13:56:07.540228
+491	3	2026-05-18	229.8700	230.0000	218.3700	222.3200	146280896	2026-09-28 13:56:07.540228
+492	3	2026-05-15	229.7600	231.5000	224.2400	225.3200	180977639	2026-09-28 13:56:07.540228
+493	3	2026-05-14	229.8500	236.5400	229.3000	235.7400	180782857	2026-09-28 13:56:07.540228
+494	3	2026-05-13	224.9300	227.8400	221.5653	225.8300	150405386	2026-09-28 13:56:07.540228
+95	1	2026-05-12	292.5600	295.2700	292.5600	294.8000	45748129	2026-09-28 13:55:36.460979
+96	1	2026-05-11	291.9790	293.8800	290.2300	292.6800	42247285	2026-09-28 13:55:36.460979
+97	1	2026-05-08	290.0100	294.7600	290.0000	293.3200	52692761	2026-09-28 13:55:36.460979
+98	1	2026-05-07	289.2700	292.1300	285.7800	287.4400	45224300	2026-09-28 13:55:36.460979
+99	1	2026-05-06	281.9150	288.0300	281.0700	287.5100	58336072	2026-09-28 13:55:36.460979
+100	1	2026-05-05	276.9250	284.5700	276.5010	284.1800	49311712	2026-09-28 13:55:36.460979
+307	2	2026-09-17	497.7950	501.4700	493.1700	497.7500	17841640	2026-09-28 13:55:52.000469
+308	2	2026-09-16	493.0300	495.9700	487.2300	490.3000	16670285	2026-09-28 13:55:52.000469
+309	2	2026-09-15	500.0600	505.9000	495.5400	497.1200	17794612	2026-09-28 13:55:52.000469
+310	2	2026-09-14	497.0600	509.9500	495.3416	505.4100	23091892	2026-09-28 13:55:52.000469
+311	2	2026-09-11	495.6500	498.9700	492.5800	495.6300	14518435	2026-09-28 13:55:52.000469
+312	2	2026-09-10	488.3200	494.5200	486.0000	492.4400	16038805	2026-09-28 13:55:52.000469
+313	2	2026-09-09	493.0700	494.3900	489.8000	491.6500	12889572	2026-09-28 13:55:52.000469
+314	2	2026-09-08	493.0100	495.1900	490.1500	493.9500	18882338	2026-09-28 13:55:52.000469
+315	2	2026-09-04	510.0000	511.0000	499.3600	499.7000	18101758	2026-09-28 13:55:52.000469
+316	2	2026-09-03	501.6600	515.6500	500.8000	510.1200	24125893	2026-09-28 13:55:52.000469
+317	2	2026-09-02	499.8500	500.2700	493.8100	496.8200	15336074	2026-09-28 13:55:52.000469
+318	2	2026-09-01	497.5200	505.9700	496.7800	501.0200	21046892	2026-09-28 13:55:52.000469
+319	2	2026-08-31	510.3800	512.1900	506.3900	507.2900	27208911	2026-09-28 13:55:52.000469
+320	2	2026-08-28	505.3300	517.7800	504.8675	513.5300	29207325	2026-09-28 13:55:52.000469
+321	2	2026-08-27	494.8800	506.4800	490.0800	505.0600	28688756	2026-09-28 13:55:52.000469
+322	2	2026-08-26	487.8500	497.4000	487.3100	496.3700	20758853	2026-09-28 13:55:52.000469
+323	2	2026-08-25	485.4400	492.4350	484.3000	491.7100	19518987	2026-09-28 13:55:52.000469
+324	2	2026-08-24	483.2050	490.6050	481.8600	487.3100	17230751	2026-09-28 13:55:52.000469
+325	2	2026-08-21	479.8800	486.3600	478.5300	483.2400	22510774	2026-09-28 13:55:52.000469
+326	2	2026-08-20	483.3000	484.1600	479.5000	481.1500	20020822	2026-09-28 13:55:52.000469
+327	2	2026-08-19	480.0650	489.3000	479.3600	484.3100	19961871	2026-09-28 13:55:52.000469
+328	2	2026-08-18	481.5400	484.2700	477.1505	481.6300	24087591	2026-09-28 13:55:52.000469
+329	2	2026-08-17	490.1400	492.6600	478.4100	480.3500	29635848	2026-09-28 13:55:52.000469
+330	2	2026-08-14	496.3550	500.0100	493.9200	495.4000	16217647	2026-09-28 13:55:52.000469
+331	2	2026-08-13	493.2650	501.3400	493.0100	496.8800	23038979	2026-09-28 13:55:52.000469
+332	2	2026-08-12	499.9900	501.5000	491.5200	492.4300	29001478	2026-09-28 13:55:52.000469
+333	2	2026-08-11	504.3300	505.3300	499.5500	503.8100	23049791	2026-09-28 13:55:52.000469
+334	2	2026-08-10	503.4400	513.7300	502.2700	506.0600	31206137	2026-09-28 13:55:52.000469
+335	2	2026-08-07	499.2100	505.1800	498.7300	499.9900	28846235	2026-09-28 13:55:52.000469
+336	2	2026-08-06	488.5500	501.5550	488.5200	499.8600	36441544	2026-09-28 13:55:52.000469
+337	2	2026-08-05	496.3550	498.2400	485.6800	487.4600	33388871	2026-09-28 13:55:52.000469
+338	2	2026-08-04	480.9000	499.4399	479.1700	492.8100	50455454	2026-09-28 13:55:52.000469
+339	2	2026-08-03	476.1250	491.6500	475.0000	487.6500	66762074	2026-09-28 13:55:52.000469
+340	2	2026-07-31	450.0000	466.8400	449.3300	464.7200	60845971	2026-09-28 13:55:52.000469
+341	2	2026-07-30	437.9000	458.6900	432.4400	451.1000	110160704	2026-09-28 13:55:52.000469
+342	2	2026-07-29	393.4000	401.2500	388.7400	390.5400	47209032	2026-09-28 13:55:52.000469
+343	2	2026-07-28	393.1600	400.3200	391.3000	393.3500	32367546	2026-09-28 13:55:52.000469
+344	2	2026-07-27	390.0800	394.2000	387.9900	389.1000	27856160	2026-09-28 13:55:52.000469
+345	2	2026-07-24	387.0500	389.0300	380.6500	381.7000	27659388	2026-09-28 13:55:52.000469
+346	2	2026-07-23	389.9650	391.7800	377.3900	381.5800	30351752	2026-09-28 13:55:52.000469
+347	2	2026-07-22	399.5800	401.0000	386.9600	390.3400	28142511	2026-09-28 13:55:52.000469
+348	2	2026-07-21	398.8050	401.4700	396.3200	397.7500	24126632	2026-09-28 13:55:52.000469
+349	2	2026-07-20	391.4100	403.1800	389.6500	402.2900	27915762	2026-09-28 13:55:52.000469
+350	2	2026-07-17	394.8550	398.3900	389.3900	393.8200	33049842	2026-09-28 13:55:52.000469
+351	2	2026-07-16	398.3100	405.9900	392.0501	401.1000	37047443	2026-09-28 13:55:52.000469
+352	2	2026-07-15	387.8000	398.9600	386.4000	395.6300	36253745	2026-09-28 13:55:52.000469
+353	2	2026-07-14	382.8200	388.1900	378.6500	384.9300	27863916	2026-09-28 13:55:52.000469
+354	2	2026-07-13	387.7450	393.6500	384.1500	390.9900	28914877	2026-09-28 13:55:52.000469
+355	2	2026-07-10	387.8000	391.9100	381.5000	385.1000	24644605	2026-09-28 13:55:52.000469
+356	2	2026-07-09	374.4500	384.6500	373.3500	384.3600	31083197	2026-09-28 13:55:52.000469
+357	2	2026-07-08	384.0300	385.3100	381.3300	383.3400	25908255	2026-09-28 13:55:52.000469
+358	2	2026-07-07	392.4900	395.5700	388.2200	388.8400	29297524	2026-09-28 13:55:52.000469
+359	2	2026-07-06	387.0400	389.1500	381.2200	386.7400	34224543	2026-09-28 13:55:52.000469
+360	2	2026-07-02	384.4800	392.2000	383.7000	390.4900	42194409	2026-09-28 13:55:52.000469
+361	2	2026-07-01	380.8250	388.8300	374.8900	384.2800	48065801	2026-09-28 13:55:52.000469
+362	2	2026-06-30	371.0300	374.1500	367.4500	373.0200	44945696	2026-09-28 13:55:52.000469
+363	2	2026-06-29	377.5000	380.5000	359.9000	368.5700	51229885	2026-09-28 13:55:52.000469
+364	2	2026-06-26	357.1500	376.6100	355.4300	372.9700	186201631	2026-09-28 13:55:52.000469
+365	2	2026-06-25	362.7700	364.2300	349.2000	352.8300	66360473	2026-09-28 13:55:52.000469
+366	2	2026-06-24	371.5700	378.8800	364.7800	365.4600	44509854	2026-09-28 13:55:52.000469
+367	2	2026-06-23	372.3800	377.2200	370.6700	373.9400	40647605	2026-09-28 13:55:52.000469
+368	2	2026-06-22	375.7400	381.6300	367.0700	367.3400	45171106	2026-09-28 13:55:52.000469
+369	2	2026-06-18	377.8200	381.3700	373.2800	379.4000	59714157	2026-09-28 13:55:52.000469
+370	2	2026-06-17	390.2500	390.3700	377.3200	378.9100	41987834	2026-09-28 13:55:52.000469
+371	2	2026-06-16	395.7900	396.8400	390.6900	393.8300	31506846	2026-09-28 13:55:52.000469
+372	2	2026-06-15	396.7950	401.7500	392.8450	399.7600	32266437	2026-09-28 13:55:52.000469
+373	2	2026-06-12	391.4300	391.7400	382.2700	390.7400	34922036	2026-09-28 13:55:52.000469
+374	2	2026-06-11	395.2050	396.8500	384.0000	390.3400	47224135	2026-09-28 13:55:52.000469
+375	2	2026-06-10	398.5500	405.0400	397.1600	397.3600	32576041	2026-09-28 13:55:52.000469
+376	2	2026-06-09	409.0300	411.9800	398.4800	403.4100	35317302	2026-09-28 13:55:52.000469
+377	2	2026-06-08	414.1400	417.1599	408.5600	411.7400	32086714	2026-09-28 13:55:52.000469
+378	2	2026-06-05	428.3400	429.4700	414.4000	416.6700	34782164	2026-09-28 13:55:52.000469
+379	2	2026-06-04	435.8100	436.1500	426.4100	428.0500	26899511	2026-09-28 13:55:52.000469
+380	2	2026-06-03	438.4500	440.3900	424.2500	427.3400	39037007	2026-09-28 13:55:52.000469
+381	2	2026-06-02	446.8800	453.5000	440.4300	441.3100	37036801	2026-09-28 13:55:52.000469
+382	2	2026-06-01	464.8400	466.3200	458.2700	460.5200	53628910	2026-09-28 13:55:52.000469
+383	2	2026-05-29	432.5450	450.3300	432.3600	450.2400	79654376	2026-09-28 13:55:52.000469
+384	2	2026-05-28	412.9750	429.4900	412.6700	426.9900	47250541	2026-09-28 13:55:52.000469
+385	2	2026-05-27	411.0100	415.9400	409.5800	412.6700	28901479	2026-09-28 13:55:52.000469
+386	2	2026-05-26	416.4300	419.7700	413.0200	416.0300	30398049	2026-09-28 13:55:52.000469
+387	2	2026-05-22	419.5350	424.4000	416.3300	418.5700	22390344	2026-09-28 13:55:52.000469
+388	2	2026-05-21	424.7500	426.3400	415.7100	419.0900	31393469	2026-09-28 13:55:52.000469
+389	2	2026-05-20	414.1650	422.1000	411.3001	421.0600	27655979	2026-09-28 13:55:52.000469
+390	2	2026-05-19	429.9000	432.7000	416.4900	417.4200	33018678	2026-09-28 13:55:52.000469
+391	2	2026-05-18	416.6200	425.1200	415.6100	423.5400	32564130	2026-09-28 13:55:52.000469
+495	3	2026-05-12	218.5450	223.7500	214.9200	220.7800	159176619	2026-09-28 13:56:07.540228
+496	3	2026-05-11	214.0350	222.3000	213.8900	219.4400	160685774	2026-09-28 13:56:07.540228
+497	3	2026-05-08	213.0300	217.8000	212.8900	215.2000	136421361	2026-09-28 13:56:07.540228
+498	3	2026-05-07	208.3400	214.2000	206.5000	211.5000	168307873	2026-09-28 13:56:07.540228
+499	3	2026-05-06	199.8900	208.2650	198.6100	207.8300	188362812	2026-09-28 13:56:07.540228
+392	2	2026-05-15	414.2700	428.1700	412.9100	421.9200	50771160	2026-09-28 13:55:52.000469
+393	2	2026-05-14	404.4800	411.8400	400.8800	409.4300	27077542	2026-09-28 13:55:52.000469
+394	2	2026-05-13	403.2000	406.3100	401.0300	405.2100	29667073	2026-09-28 13:55:52.000469
+395	2	2026-05-12	414.4800	415.5000	406.6400	407.7700	38594221	2026-09-28 13:55:52.000469
+396	2	2026-05-11	407.8700	412.6900	405.5000	412.6600	35657943	2026-09-28 13:55:52.000469
+397	2	2026-05-08	417.3850	418.6300	414.0000	415.1200	33383790	2026-09-28 13:55:52.000469
+398	2	2026-05-07	420.1100	427.9800	418.7600	420.7700	34942445	2026-09-28 13:55:52.000469
+399	2	2026-05-06	408.0000	418.4228	405.1100	413.9600	30285898	2026-09-28 13:55:52.000469
+400	2	2026-05-05	415.3200	416.7799	408.8000	411.3800	25700891	2026-09-28 13:55:52.000469
+500	3	2026-05-05	199.3000	200.2400	196.0300	196.5000	113406620	2026-09-28 13:56:07.540228
+501	4	2026-09-25	384.6200	386.8300	367.6700	372.1100	45999470	2026-09-28 13:56:23.157493
+502	4	2026-09-24	377.3500	383.3324	375.7000	377.9400	26165727	2026-09-28 13:56:23.157493
+503	4	2026-09-23	380.1000	386.7000	377.5750	380.1200	33522492	2026-09-28 13:56:23.157493
+504	4	2026-09-22	379.0690	380.4200	372.8800	378.9000	28229908	2026-09-28 13:56:23.157493
+505	4	2026-09-21	371.6350	378.3600	371.0700	375.3000	36599609	2026-09-28 13:56:23.157493
+506	4	2026-09-18	369.0000	370.9000	360.7510	364.2700	51922256	2026-09-28 13:56:23.157493
+507	4	2026-09-17	367.4800	374.1200	363.2200	366.2000	38924057	2026-09-28 13:56:23.157493
+508	4	2026-09-16	357.9250	365.1000	354.8913	358.0800	32177388	2026-09-28 13:56:23.157493
+509	4	2026-09-15	358.7500	362.3900	354.0500	356.5800	30317727	2026-09-28 13:56:23.157493
+510	4	2026-09-14	359.7800	367.7300	357.0400	358.9700	32477181	2026-09-28 13:56:23.157493
+511	4	2026-09-11	364.2000	368.6600	361.6000	365.4400	30153019	2026-09-28 13:56:23.157493
+512	4	2026-09-10	360.5950	369.2100	357.6800	363.5600	29667241	2026-09-28 13:56:23.157493
+513	4	2026-09-09	368.2500	375.4400	366.0000	367.8100	32564336	2026-09-28 13:56:23.157493
+514	4	2026-09-08	357.0950	370.0000	355.7500	368.1600	51078786	2026-09-28 13:56:23.157493
+515	4	2026-09-04	362.0700	364.6900	351.3201	354.0800	65018209	2026-09-28 13:56:23.157493
+516	4	2026-09-03	365.8200	384.0400	365.8200	376.3650	63600987	2026-09-28 13:56:23.157493
+517	4	2026-09-02	360.4100	360.6200	349.9200	357.0100	33951909	2026-09-28 13:56:23.157493
+518	4	2026-09-01	360.9000	362.7000	352.9600	356.0900	36193926	2026-09-28 13:56:23.157493
+519	4	2026-08-31	347.2100	368.9200	347.1500	367.9500	61732258	2026-09-28 13:56:23.157493
+520	4	2026-08-28	357.0950	358.8000	345.2000	348.7500	32972214	2026-09-28 13:56:23.157493
+521	4	2026-08-27	346.1550	355.7400	345.4500	354.8100	30136164	2026-09-28 13:56:23.157493
+522	4	2026-08-26	345.2700	351.9300	342.5300	345.8200	28573007	2026-09-28 13:56:23.157493
+523	4	2026-08-25	349.5800	357.0000	349.2003	350.2500	29816685	2026-09-28 13:56:23.157493
+524	4	2026-08-24	361.4100	363.2400	348.2600	348.9500	39190484	2026-09-28 13:56:23.157493
+525	4	2026-08-21	349.8800	366.5000	346.9000	362.8600	59223958	2026-09-28 13:56:23.157493
+526	4	2026-08-20	346.2000	347.5000	338.9600	345.1300	30766360	2026-09-28 13:56:23.157493
+527	4	2026-08-19	338.8900	351.6200	335.7000	351.1200	36735428	2026-09-28 13:56:23.157493
+528	4	2026-08-18	333.2200	340.5300	331.1200	336.8700	27994466	2026-09-28 13:56:23.157493
+529	4	2026-08-17	340.6900	345.4500	337.4800	339.3000	26037093	2026-09-28 13:56:23.157493
+530	4	2026-08-14	342.3300	351.2600	335.3306	342.2700	45437144	2026-09-28 13:56:23.157493
+531	4	2026-08-13	327.2000	341.6400	325.2400	339.9600	34708303	2026-09-28 13:56:23.157493
+532	4	2026-08-12	335.0000	335.5000	323.6400	327.5100	28698879	2026-09-28 13:56:23.157493
+533	4	2026-08-11	332.8000	336.2000	329.5300	332.8100	23345233	2026-09-28 13:56:23.157493
+534	4	2026-08-10	326.5950	332.0500	326.1500	330.8800	25003808	2026-09-28 13:56:23.157493
+535	4	2026-08-07	322.3400	333.7300	321.2508	328.5800	39492345	2026-09-28 13:56:23.157493
+536	4	2026-08-06	317.0500	323.0000	315.5205	319.5300	26033776	2026-09-28 13:56:23.157493
+537	4	2026-08-05	323.4200	327.1400	320.2800	321.5500	27820813	2026-09-28 13:56:23.157493
+538	4	2026-08-04	324.0000	329.5700	320.7901	327.3500	33318303	2026-09-28 13:56:23.157493
+539	4	2026-08-03	310.9600	324.6500	310.4250	322.0800	38281362	2026-09-28 13:56:23.157493
+540	4	2026-07-31	309.6900	315.5000	301.9700	311.2100	36630560	2026-09-28 13:56:23.157493
+541	4	2026-07-30	302.7000	310.8700	301.3300	308.8500	38005390	2026-09-28 13:56:23.157493
+542	4	2026-07-29	307.1400	309.0600	297.3800	298.3200	39478039	2026-09-28 13:56:23.157493
+543	4	2026-07-28	305.9250	311.1600	300.6900	307.4400	39802421	2026-09-28 13:56:23.157493
+544	4	2026-07-27	313.2400	317.0000	304.2800	309.2200	44919377	2026-09-28 13:56:23.157493
+545	4	2026-07-24	320.7200	322.9600	306.5100	313.0300	62760007	2026-09-28 13:56:23.157493
+546	4	2026-07-23	341.0000	342.1100	315.7350	319.6900	115606413	2026-09-28 13:56:23.157493
+547	4	2026-07-22	375.5300	380.1700	372.9000	374.0100	30646124	2026-09-28 13:56:23.157493
+548	4	2026-07-21	371.1650	384.0700	369.9800	378.9300	32735334	2026-09-28 13:56:23.157493
+549	4	2026-07-20	386.0450	386.6100	369.4250	369.5700	33901516	2026-09-28 13:56:23.157493
+550	4	2026-07-17	381.7800	385.6899	377.2200	380.8400	31394594	2026-09-28 13:56:23.157493
+551	4	2026-07-16	392.3500	395.3100	385.3200	391.0600	29269113	2026-09-28 13:56:23.157493
+552	4	2026-07-15	399.3950	406.5895	390.6600	394.4600	31549805	2026-09-28 13:56:23.157493
+553	4	2026-07-14	399.0500	402.2200	394.7600	396.1800	23384992	2026-09-28 13:56:23.157493
+554	4	2026-07-13	404.6100	405.5700	391.3700	394.7600	32809171	2026-09-28 13:56:23.157493
+555	4	2026-07-10	410.4900	413.1600	402.8101	407.7600	33409995	2026-09-28 13:56:23.157493
+556	4	2026-07-09	393.9900	407.8600	390.8631	406.5500	37834988	2026-09-28 13:56:23.157493
+557	4	2026-07-08	399.3750	399.6300	390.5100	394.0600	33844906	2026-09-28 13:56:23.157493
+558	4	2026-07-07	416.9600	419.5600	401.8800	402.9000	38149901	2026-09-28 13:56:23.157493
+559	4	2026-07-06	397.5000	420.0000	390.5000	419.7700	54727861	2026-09-28 13:56:23.157493
+560	4	2026-07-02	428.0100	432.3500	389.3011	393.4500	73915762	2026-09-28 13:56:23.157493
+561	4	2026-07-01	421.4600	432.8599	418.0901	425.3000	40127902	2026-09-28 13:56:23.157493
+562	4	2026-06-30	406.0000	424.5400	406.0000	420.6000	43385619	2026-09-28 13:56:23.157493
+563	4	2026-06-29	381.7900	413.2700	379.3000	411.8400	57645798	2026-09-28 13:56:23.157493
+564	4	2026-06-26	370.1500	387.8000	368.6000	379.7100	53434138	2026-09-28 13:56:23.157493
+565	4	2026-06-25	375.2700	379.1170	371.2210	375.1200	30259987	2026-09-28 13:56:23.157493
+566	4	2026-06-24	380.0800	384.5800	373.0500	375.5300	37081421	2026-09-28 13:56:23.157493
+567	4	2026-06-23	392.6100	392.8700	379.0600	381.6100	50420210	2026-09-28 13:56:23.157493
+568	4	2026-06-22	394.8500	414.7500	394.4000	405.0500	47819486	2026-09-28 13:56:23.157493
+569	4	2026-06-18	398.0950	402.5200	384.7000	400.4900	58384713	2026-09-28 13:56:23.157493
+570	4	2026-06-17	401.5300	405.9400	393.7600	396.3800	43534299	2026-09-28 13:56:23.157493
+571	4	2026-06-16	404.1100	412.4200	400.5400	404.6600	40255473	2026-09-28 13:56:23.157493
+572	4	2026-06-15	412.3700	416.0000	407.1000	411.1500	45620514	2026-09-28 13:56:23.157493
+573	4	2026-06-12	399.4900	406.6800	386.7600	406.4300	63652286	2026-09-28 13:56:23.157493
+574	4	2026-06-11	388.2800	399.5400	380.6600	399.1500	45324348	2026-09-28 13:56:23.157493
+575	4	2026-06-10	391.5400	397.0900	380.1500	381.5900	49695583	2026-09-28 13:56:23.157493
+576	4	2026-06-09	411.0300	418.5000	384.2400	396.6800	59940230	2026-09-28 13:56:23.157493
+577	4	2026-06-08	396.3300	412.9400	394.7200	408.9500	50328834	2026-09-28 13:56:23.157493
+578	4	2026-06-05	420.5000	424.6799	388.5900	391.0000	63420177	2026-09-28 13:56:23.157493
+579	4	2026-06-04	419.8400	426.3499	417.1600	418.4500	35323259	2026-09-28 13:56:23.157493
+580	4	2026-06-03	418.7000	433.6000	416.0000	423.7000	44500733	2026-09-28 13:56:23.157493
+581	4	2026-06-02	418.2200	424.4200	413.6500	423.7400	37596045	2026-09-28 13:56:23.157493
+582	4	2026-06-01	427.4900	429.6000	415.4300	415.8800	44937852	2026-09-28 13:56:23.157493
+583	4	2026-05-29	439.8450	441.0700	428.1400	435.7900	45176821	2026-09-28 13:56:23.157493
+584	4	2026-05-28	437.6150	443.9600	436.3000	442.1000	32434996	2026-09-28 13:56:23.157493
+585	4	2026-05-27	442.8900	445.6000	435.5200	440.3600	44656505	2026-09-28 13:56:23.157493
+586	4	2026-05-26	430.2600	435.2000	426.1200	433.5900	45658897	2026-09-28 13:56:23.157493
+587	4	2026-05-22	422.6650	431.5100	420.5100	426.0100	46104710	2026-09-28 13:56:23.157493
+588	4	2026-05-21	422.1750	426.9500	412.9000	417.8500	42636854	2026-09-28 13:56:23.157493
+589	4	2026-05-20	407.6000	417.4600	406.3900	417.2600	44484579	2026-09-28 13:56:23.157493
+590	4	2026-05-19	403.1600	405.6300	393.6300	404.1100	46500551	2026-09-28 13:56:23.157493
+591	4	2026-05-18	419.2700	421.1300	405.3300	409.9900	52474188	2026-09-28 13:56:23.157493
+592	4	2026-05-15	433.9800	434.6600	422.0000	422.2400	52688742	2026-09-28 13:56:23.157493
+593	4	2026-05-14	446.4900	451.9800	441.1600	443.3000	46070361	2026-09-28 13:56:23.157493
+594	4	2026-05-13	436.6650	453.4000	430.2100	445.2700	68283229	2026-09-28 13:56:23.157493
+595	4	2026-05-12	441.4100	447.8000	422.2600	433.4500	60569303	2026-09-28 13:56:23.157493
+596	4	2026-05-11	422.1600	449.1600	416.8000	445.0000	78376127	2026-09-28 13:56:23.157493
+597	4	2026-05-08	416.4750	431.2000	416.3900	428.3500	65049970	2026-09-28 13:56:23.157493
+598	4	2026-05-07	407.4800	415.8300	402.1200	411.7900	64294224	2026-09-28 13:56:23.157493
+599	4	2026-05-06	386.2500	401.6800	384.0200	398.7300	53465365	2026-09-28 13:56:23.157493
+600	4	2026-05-05	395.1850	402.1200	389.0000	389.3700	47780631	2026-09-28 13:56:23.157493
+601	5	2026-09-25	342.3500	347.0300	341.1100	343.9200	21880846	2026-09-28 13:56:38.705688
+602	5	2026-09-24	336.2200	343.0900	336.0201	342.3600	23777195	2026-09-28 13:56:38.705688
+603	5	2026-09-23	349.8600	350.0000	337.4500	337.8300	35576229	2026-09-28 13:56:38.705688
+604	5	2026-09-22	357.6500	364.1700	350.2200	351.1600	29788597	2026-09-28 13:56:38.705688
+605	5	2026-09-21	350.6400	357.6100	349.1000	354.9700	30455384	2026-09-28 13:56:38.705688
+606	5	2026-09-18	357.3050	359.4400	348.4450	349.5400	47631754	2026-09-28 13:56:38.705688
+607	5	2026-09-17	348.6750	349.5000	343.8857	347.3300	19238355	2026-09-28 13:56:38.705688
+608	5	2026-09-16	347.0800	348.4000	340.6400	342.8700	18928864	2026-09-28 13:56:38.705688
+609	5	2026-09-15	346.8000	348.0700	342.7000	344.9800	21928572	2026-09-28 13:56:38.705688
+610	5	2026-09-14	343.1200	349.9100	342.1361	349.3900	35905445	2026-09-28 13:56:38.705688
+611	5	2026-09-11	335.0300	342.9800	335.0300	338.5000	24708293	2026-09-28 13:56:38.705688
+612	5	2026-09-10	328.2250	333.2300	327.7400	332.6000	23557551	2026-09-28 13:56:38.705688
+613	5	2026-09-09	331.6500	331.8500	327.9000	330.6500	33151627	2026-09-28 13:56:38.705688
+614	5	2026-09-08	335.4200	339.6800	333.2200	338.3600	22915839	2026-09-28 13:56:38.705688
+615	5	2026-09-04	342.4650	343.5300	337.0900	338.4600	23189321	2026-09-28 13:56:38.705688
+616	5	2026-09-03	340.5600	344.6800	340.0600	342.4800	20726904	2026-09-28 13:56:38.705688
+617	5	2026-09-02	334.0600	340.0000	332.8200	337.1200	22582286	2026-09-28 13:56:38.705688
+618	5	2026-09-01	336.0000	337.2000	333.0500	335.0200	23342665	2026-09-28 13:56:38.705688
+619	5	2026-08-31	343.8250	344.5900	337.1560	339.3500	33493632	2026-09-28 13:56:38.705688
+620	5	2026-08-28	340.7050	349.1400	340.2700	346.5900	25347206	2026-09-28 13:56:38.705688
+621	5	2026-08-27	339.6700	341.6900	338.5200	340.6500	23391389	2026-09-28 13:56:38.705688
+622	5	2026-08-26	346.6200	346.8800	340.1800	342.0000	20420257	2026-09-28 13:56:38.705688
+623	5	2026-08-25	349.6400	350.1600	345.6000	346.9600	20649680	2026-09-28 13:56:38.705688
+624	5	2026-08-24	343.6150	351.6000	342.4900	348.0600	26338229	2026-09-28 13:56:38.705688
+625	5	2026-08-21	342.5750	346.2000	340.4000	344.8200	20849776	2026-09-28 13:56:38.705688
+626	5	2026-08-20	343.0600	343.9000	338.5651	340.6700	18570357	2026-09-28 13:56:38.705688
+627	5	2026-08-19	342.4550	346.7300	340.6600	344.7200	19733808	2026-09-28 13:56:38.705688
+628	5	2026-08-18	342.4050	344.8699	340.1900	344.2000	19248828	2026-09-28 13:56:38.705688
+629	5	2026-08-17	346.2650	347.2500	341.9300	344.0000	18291309	2026-09-28 13:56:38.705688
+630	5	2026-08-14	346.8000	350.4500	344.5000	345.9000	17808598	2026-09-28 13:56:38.705688
+631	5	2026-08-13	345.7700	347.9300	343.7600	346.3600	17866072	2026-09-28 13:56:38.705688
+632	5	2026-08-12	346.3100	346.4800	340.8800	343.5400	25011987	2026-09-28 13:56:38.705688
+633	5	2026-08-11	355.8900	356.8100	343.3900	343.8000	29081802	2026-09-28 13:56:38.705688
+634	5	2026-08-10	355.1750	357.6100	352.7100	357.5200	18991368	2026-09-28 13:56:38.705688
+635	5	2026-08-07	356.7200	358.9000	353.7800	354.3000	19859905	2026-09-28 13:56:38.705688
+636	5	2026-08-06	360.7700	364.1259	356.8800	357.7500	25235895	2026-09-28 13:56:38.705688
+637	5	2026-08-05	383.3400	384.4800	356.7700	362.4300	46926339	2026-09-28 13:56:38.705688
+638	5	2026-08-04	368.2200	380.5200	367.5000	377.6500	35705703	2026-09-28 13:56:38.705688
+639	5	2026-08-03	365.4450	376.6932	363.3500	373.5100	38669652	2026-09-28 13:56:38.705688
+640	5	2026-07-31	340.8300	358.5800	340.0000	356.1300	46498023	2026-09-28 13:56:38.705688
+641	5	2026-07-30	334.1950	336.5100	330.3400	333.6600	30168000	2026-09-28 13:56:38.705688
+642	5	2026-07-29	334.6650	342.5000	331.6200	336.7100	27501632	2026-09-28 13:56:38.705688
+643	5	2026-07-28	327.9000	335.8800	324.4400	333.7100	29511940	2026-09-28 13:56:38.705688
+644	5	2026-07-27	325.0400	330.4200	324.4500	326.5600	28471593	2026-09-28 13:56:38.705688
+645	5	2026-07-24	318.4200	324.1800	317.3200	319.7400	31806553	2026-09-28 13:56:38.705688
+646	5	2026-07-23	321.1300	324.4900	314.9000	317.6900	69419700	2026-09-28 13:56:38.705688
+647	5	2026-07-22	348.1550	349.9400	341.7300	342.0900	39334140	2026-09-28 13:56:38.705688
+648	5	2026-07-21	351.3200	351.3200	347.0000	347.1500	23369833	2026-09-28 13:56:38.705688
+649	5	2026-07-20	350.8800	359.6800	350.5200	351.9900	24736644	2026-09-28 13:56:38.705688
+650	5	2026-07-17	346.0000	348.5200	341.3600	346.7700	29959283	2026-09-28 13:56:38.705688
+651	5	2026-07-16	373.0600	375.2700	352.3001	354.4600	41158466	2026-09-28 13:56:38.705688
+652	5	2026-07-15	357.9700	373.6500	357.7600	370.9200	28284564	2026-09-28 13:56:38.705688
+653	5	2026-07-14	351.1950	360.1600	351.0900	359.5100	18259355	2026-09-28 13:56:38.705688
+654	5	2026-07-13	356.1900	358.1300	351.7500	352.5100	15901732	2026-09-28 13:56:38.705688
+655	5	2026-07-10	357.5250	357.8200	352.7500	357.1800	18146146	2026-09-28 13:56:38.705688
+656	5	2026-07-09	354.3100	359.6500	351.0800	358.8900	24729093	2026-09-28 13:56:38.705688
+657	5	2026-07-08	364.7600	367.8400	358.0200	361.9200	22094769	2026-09-28 13:56:38.705688
+658	5	2026-07-07	369.0700	373.1600	365.5000	367.0300	24045581	2026-09-28 13:56:38.705688
+659	5	2026-07-06	361.5500	367.9300	357.3805	366.4600	26915808	2026-09-28 13:56:38.705688
+660	5	2026-07-02	359.4800	364.2050	353.4200	359.9100	25999346	2026-09-28 13:56:38.705688
+661	5	2026-07-01	358.3700	362.9700	356.4300	361.2100	26736445	2026-09-28 13:56:38.705688
+662	5	2026-06-30	353.8650	358.6200	350.4000	357.3700	35237231	2026-09-28 13:56:38.705688
+663	5	2026-06-29	341.8250	354.3500	340.6700	353.6500	34213932	2026-09-28 13:56:38.705688
+664	5	2026-06-26	342.5500	346.3600	330.2000	337.3900	114706326	2026-09-28 13:56:38.705688
+665	5	2026-06-25	336.7300	345.5700	335.8400	343.7100	44564576	2026-09-28 13:56:38.705688
+666	5	2026-06-24	349.0350	353.4760	341.9300	345.2900	44997277	2026-09-28 13:56:38.705688
+667	5	2026-06-23	340.6900	349.2900	340.2000	346.1300	34007652	2026-09-28 13:56:38.705688
+668	5	2026-06-22	357.9450	358.9200	341.7219	349.6800	52814764	2026-09-28 13:56:38.705688
+669	5	2026-06-18	365.7500	369.4800	358.6700	368.0300	44470070	2026-09-28 13:56:38.705688
+670	5	2026-06-17	369.1250	372.3300	362.0200	363.7900	24543644	2026-09-28 13:56:38.705688
+671	5	2026-06-16	369.6000	376.0000	367.0600	373.2500	24876095	2026-09-28 13:56:38.705688
+672	5	2026-06-15	367.9300	372.9900	366.5500	369.3500	27727493	2026-09-28 13:56:38.705688
+673	5	2026-06-12	362.6200	366.5700	354.9400	359.6800	24731019	2026-09-28 13:56:38.705688
+674	5	2026-06-11	355.9250	358.8000	346.3600	357.7700	35538165	2026-09-28 13:56:38.705688
+675	5	2026-06-10	363.1900	368.5550	355.2000	356.3800	32357132	2026-09-28 13:56:38.705688
+676	5	2026-06-09	367.0900	372.0800	357.3000	364.2600	29535072	2026-09-28 13:56:38.705688
+677	5	2026-06-08	365.1800	366.2000	360.5309	363.3100	27942464	2026-09-28 13:56:38.705688
+678	5	2026-06-05	366.3400	372.0800	364.1207	368.5300	37471206	2026-09-28 13:56:38.705688
+679	5	2026-06-04	358.9000	373.2499	358.2100	372.1900	44055520	2026-09-28 13:56:38.705688
+680	5	2026-06-03	362.0300	366.4500	358.0800	358.9900	55441583	2026-09-28 13:56:38.705688
+681	5	2026-06-02	366.5900	373.5400	358.4400	361.8500	50412300	2026-09-28 13:56:38.705688
+682	5	2026-06-01	376.5200	378.5600	373.5200	376.3700	28672120	2026-09-28 13:56:38.705688
+683	5	2026-05-29	385.2400	385.2400	378.4600	380.3400	44415846	2026-09-28 13:56:38.705688
+684	5	2026-05-28	388.0000	391.8700	385.1600	390.1300	24357455	2026-09-28 13:56:38.705688
+685	5	2026-05-27	386.6650	393.8800	385.9000	388.8300	23087287	2026-09-28 13:56:38.705688
+686	5	2026-05-26	384.5100	389.2599	382.6000	388.8800	27747388	2026-09-28 13:56:38.705688
+687	5	2026-05-22	387.3450	388.7400	381.7716	382.9700	20442123	2026-09-28 13:56:38.705688
+688	5	2026-05-21	385.7000	392.5000	383.0200	387.6600	24852843	2026-09-28 13:56:38.705688
+689	5	2026-05-20	387.7000	393.8599	382.9000	388.9100	30504055	2026-09-28 13:56:38.705688
+690	5	2026-05-19	396.9600	397.1500	386.1100	387.6600	39545672	2026-09-28 13:56:38.705688
+691	5	2026-05-18	395.6850	408.6100	394.5300	396.9400	26837196	2026-09-28 13:56:38.705688
+692	5	2026-05-15	396.3150	399.5399	393.1800	396.7800	20309702	2026-09-28 13:56:38.705688
+693	5	2026-05-14	397.2800	402.9300	395.8400	401.0700	21136716	2026-09-28 13:56:38.705688
+694	5	2026-05-13	385.5950	403.7000	385.0000	402.6200	28144555	2026-09-28 13:56:38.705688
+695	5	2026-05-12	387.3400	388.5200	382.7700	387.3500	26017488	2026-09-28 13:56:38.705688
+696	5	2026-05-11	393.6450	397.4400	388.4700	388.6400	30753738	2026-09-28 13:56:38.705688
+697	5	2026-05-08	397.0000	402.0000	396.3600	400.8000	21461849	2026-09-28 13:56:38.705688
+698	5	2026-05-07	399.9200	400.1000	392.6800	397.9900	24433490	2026-09-28 13:56:38.705688
+699	5	2026-05-06	394.2450	399.8499	392.7600	398.0400	31308476	2026-09-28 13:56:38.705688
+700	5	2026-05-05	386.2300	392.8199	384.0200	388.4300	23878626	2026-09-28 13:56:38.705688
+\.
+
+
+--
+-- TOC entry 5128 (class 0 OID 24662)
+-- Dependencies: 239
+-- Data for Name: synclog; Type: TABLE DATA; Schema: dwh; Owner: postgres
+--
+
+COPY dwh.synclog (syncid, symbol, synctype, syncdate, status, recordsaffected, executiontime, errormessage) FROM stdin;
+1	AAPL	OHLC	2026-08-17	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+2	AAPL	OHLC	2026-05-12	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+3	AAPL	OHLC	2026-05-20	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+4	AAPL	OHLC	2026-09-25	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+5	AAPL	OHLC	2026-08-07	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+6	AAPL	OHLC	2026-08-31	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+7	AAPL	OHLC	2026-05-07	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+8	AAPL	OHLC	2026-08-04	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+9	AAPL	OHLC	2026-05-29	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+10	AAPL	OHLC	2026-09-16	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+11	AAPL	OHLC	2026-05-15	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+12	AAPL	OHLC	2026-06-02	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+13	AAPL	OHLC	2026-06-05	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+14	AAPL	OHLC	2026-07-02	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+15	AAPL	OHLC	2026-07-16	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+16	AAPL	OHLC	2026-09-18	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+17	AAPL	OHLC	2026-08-19	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+18	AAPL	OHLC	2026-07-15	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+19	AAPL	OHLC	2026-06-09	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+20	AAPL	OHLC	2026-06-15	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+61	AAPL	OHLC	2026-09-23	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+62	AAPL	OHLC	2026-07-01	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+63	AAPL	OHLC	2026-08-21	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+64	AAPL	OHLC	2026-05-21	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+65	AAPL	OHLC	2026-06-11	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+66	AAPL	OHLC	2026-07-07	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+67	AAPL	OHLC	2026-07-17	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+68	AAPL	OHLC	2026-06-16	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+69	AAPL	OHLC	2026-08-26	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+70	AAPL	OHLC	2026-05-27	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+71	AAPL	OHLC	2026-06-22	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+72	AAPL	OHLC	2026-08-05	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+73	AAPL	OHLC	2026-09-08	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+74	AAPL	OHLC	2026-07-27	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+75	AAPL	OHLC	2026-09-15	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+76	AAPL	OHLC	2026-05-19	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+77	AAPL	OHLC	2026-06-24	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+78	AAPL	OHLC	2026-06-23	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+79	AAPL	OHLC	2026-08-25	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+80	AAPL	OHLC	2026-07-10	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+81	AAPL	OHLC	2026-08-06	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+82	AAPL	OHLC	2026-06-26	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+83	AAPL	OHLC	2026-08-20	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+84	AAPL	OHLC	2026-07-06	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+85	AAPL	OHLC	2026-05-06	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+86	AAPL	OHLC	2026-06-25	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+87	AAPL	OHLC	2026-09-14	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+88	AAPL	OHLC	2026-09-09	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+89	AAPL	OHLC	2026-06-08	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+90	AAPL	OHLC	2026-05-05	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+91	AAPL	OHLC	2026-08-11	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+92	AAPL	OHLC	2026-08-28	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+93	AAPL	OHLC	2026-07-23	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+94	AAPL	OHLC	2026-07-21	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+95	AAPL	OHLC	2026-06-30	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+96	AAPL	OHLC	2026-09-01	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+97	AAPL	OHLC	2026-06-29	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+98	AAPL	OHLC	2026-07-24	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+99	AAPL	OHLC	2026-09-10	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+100	AAPL	OHLC	2026-06-18	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+301	MSFT	OHLC	2026-06-22	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+302	MSFT	OHLC	2026-07-06	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+303	MSFT	OHLC	2026-07-07	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+304	MSFT	OHLC	2026-06-16	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+305	MSFT	OHLC	2026-07-31	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+306	MSFT	OHLC	2026-06-30	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+307	MSFT	OHLC	2026-09-08	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+308	MSFT	OHLC	2026-08-07	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+309	MSFT	OHLC	2026-07-14	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+310	MSFT	OHLC	2026-08-18	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+311	MSFT	OHLC	2026-06-11	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+312	MSFT	OHLC	2026-05-27	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+313	MSFT	OHLC	2026-07-22	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+314	MSFT	OHLC	2026-08-28	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+315	MSFT	OHLC	2026-07-09	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+316	MSFT	OHLC	2026-05-28	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+317	MSFT	OHLC	2026-07-10	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+318	MSFT	OHLC	2026-07-16	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+319	MSFT	OHLC	2026-07-30	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+320	MSFT	OHLC	2026-09-21	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+401	NVDA	OHLC	2026-05-19	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+402	NVDA	OHLC	2026-08-07	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+403	NVDA	OHLC	2026-05-06	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+404	NVDA	OHLC	2026-05-11	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+405	NVDA	OHLC	2026-05-27	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+406	NVDA	OHLC	2026-06-12	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+407	NVDA	OHLC	2026-08-28	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+408	NVDA	OHLC	2026-09-10	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+409	NVDA	OHLC	2026-08-10	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+410	NVDA	OHLC	2026-07-15	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+411	NVDA	OHLC	2026-09-15	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+412	NVDA	OHLC	2026-05-29	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+413	NVDA	OHLC	2026-08-13	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+414	NVDA	OHLC	2026-09-23	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+415	NVDA	OHLC	2026-07-31	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+416	NVDA	OHLC	2026-07-24	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+417	NVDA	OHLC	2026-08-18	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+418	NVDA	OHLC	2026-09-22	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+419	NVDA	OHLC	2026-08-31	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+420	NVDA	OHLC	2026-06-29	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+321	MSFT	OHLC	2026-05-18	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+322	MSFT	OHLC	2026-06-04	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+323	MSFT	OHLC	2026-06-01	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+324	MSFT	OHLC	2026-06-29	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+325	MSFT	OHLC	2026-08-12	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+326	MSFT	OHLC	2026-05-19	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+327	MSFT	OHLC	2026-07-17	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+328	MSFT	OHLC	2026-09-25	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+329	MSFT	OHLC	2026-08-05	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+330	MSFT	OHLC	2026-05-20	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+331	MSFT	OHLC	2026-06-08	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+332	MSFT	OHLC	2026-07-01	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+333	MSFT	OHLC	2026-07-23	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+334	MSFT	OHLC	2026-06-26	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+335	MSFT	OHLC	2026-08-26	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+336	MSFT	OHLC	2026-05-06	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+337	MSFT	OHLC	2026-09-01	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+338	MSFT	OHLC	2026-06-25	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+421	NVDA	OHLC	2026-09-09	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+422	NVDA	OHLC	2026-08-21	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+423	NVDA	OHLC	2026-06-26	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+424	NVDA	OHLC	2026-06-15	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+425	NVDA	OHLC	2026-09-16	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+426	NVDA	OHLC	2026-09-25	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+427	NVDA	OHLC	2026-05-22	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+428	NVDA	OHLC	2026-06-09	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+429	NVDA	OHLC	2026-07-07	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+430	NVDA	OHLC	2026-07-22	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+431	NVDA	OHLC	2026-05-13	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+432	NVDA	OHLC	2026-05-26	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+433	NVDA	OHLC	2026-07-13	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+434	NVDA	OHLC	2026-06-03	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+435	NVDA	OHLC	2026-07-02	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+436	NVDA	OHLC	2026-06-10	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+437	NVDA	OHLC	2026-06-16	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+438	NVDA	OHLC	2026-06-05	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+439	NVDA	OHLC	2026-06-11	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+440	NVDA	OHLC	2026-07-01	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+441	NVDA	OHLC	2026-09-18	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+442	NVDA	OHLC	2026-09-21	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+443	NVDA	OHLC	2026-05-18	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+444	NVDA	OHLC	2026-07-30	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+445	NVDA	OHLC	2026-08-27	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+446	NVDA	OHLC	2026-06-17	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+447	NVDA	OHLC	2026-08-03	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+448	NVDA	OHLC	2026-05-21	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+449	NVDA	OHLC	2026-07-21	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+450	NVDA	OHLC	2026-09-24	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+451	NVDA	OHLC	2026-06-18	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+452	NVDA	OHLC	2026-09-08	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+453	NVDA	OHLC	2026-05-12	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+454	NVDA	OHLC	2026-08-04	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+455	NVDA	OHLC	2026-08-20	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+456	NVDA	OHLC	2026-06-25	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+457	NVDA	OHLC	2026-07-17	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+458	NVDA	OHLC	2026-08-19	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+459	NVDA	OHLC	2026-07-28	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+460	NVDA	OHLC	2026-09-04	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+21	AAPL	OHLC	2026-08-03	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+22	AAPL	OHLC	2026-09-11	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+23	AAPL	OHLC	2026-06-03	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+24	AAPL	OHLC	2026-06-04	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+25	AAPL	OHLC	2026-06-12	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+26	AAPL	OHLC	2026-05-11	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+27	AAPL	OHLC	2026-07-22	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+28	AAPL	OHLC	2026-07-09	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+29	AAPL	OHLC	2026-09-03	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+30	AAPL	OHLC	2026-09-24	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+31	AAPL	OHLC	2026-07-30	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+32	AAPL	OHLC	2026-08-24	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+33	AAPL	OHLC	2026-05-28	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+34	AAPL	OHLC	2026-06-17	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+35	AAPL	OHLC	2026-09-17	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+36	AAPL	OHLC	2026-07-31	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+37	AAPL	OHLC	2026-07-20	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+38	AAPL	OHLC	2026-09-21	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+39	AAPL	OHLC	2026-07-29	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+40	AAPL	OHLC	2026-08-27	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+41	AAPL	OHLC	2026-08-13	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+42	AAPL	OHLC	2026-08-10	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+43	AAPL	OHLC	2026-07-28	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+44	AAPL	OHLC	2026-06-01	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+45	AAPL	OHLC	2026-05-18	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+46	AAPL	OHLC	2026-09-04	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+47	AAPL	OHLC	2026-07-13	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+48	AAPL	OHLC	2026-08-12	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+49	AAPL	OHLC	2026-07-14	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+50	AAPL	OHLC	2026-05-14	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+51	AAPL	OHLC	2026-05-22	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+52	AAPL	OHLC	2026-08-18	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+53	AAPL	OHLC	2026-07-08	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+54	AAPL	OHLC	2026-08-14	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+55	AAPL	OHLC	2026-09-22	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+56	AAPL	OHLC	2026-09-02	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+57	AAPL	OHLC	2026-05-08	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+58	AAPL	OHLC	2026-05-13	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+59	AAPL	OHLC	2026-06-10	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+60	AAPL	OHLC	2026-05-26	SUCCESS	1	2026-09-28 13:55:36.460979	\N
+461	NVDA	OHLC	2026-09-17	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+462	NVDA	OHLC	2026-05-15	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+463	NVDA	OHLC	2026-05-05	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+464	NVDA	OHLC	2026-07-06	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+465	NVDA	OHLC	2026-07-20	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+466	NVDA	OHLC	2026-08-17	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+467	NVDA	OHLC	2026-07-10	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+468	NVDA	OHLC	2026-05-14	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+469	NVDA	OHLC	2026-07-16	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+470	NVDA	OHLC	2026-06-23	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+471	NVDA	OHLC	2026-08-12	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+472	NVDA	OHLC	2026-09-03	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+473	NVDA	OHLC	2026-08-14	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+474	NVDA	OHLC	2026-06-30	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+475	NVDA	OHLC	2026-06-02	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+476	NVDA	OHLC	2026-08-11	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+477	NVDA	OHLC	2026-07-08	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+478	NVDA	OHLC	2026-05-07	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+479	NVDA	OHLC	2026-05-08	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+480	NVDA	OHLC	2026-08-06	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+481	NVDA	OHLC	2026-05-20	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+482	NVDA	OHLC	2026-06-04	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+483	NVDA	OHLC	2026-07-09	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+484	NVDA	OHLC	2026-07-27	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+485	NVDA	OHLC	2026-08-25	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+486	NVDA	OHLC	2026-06-01	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+487	NVDA	OHLC	2026-09-02	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+488	NVDA	OHLC	2026-08-26	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+489	NVDA	OHLC	2026-06-22	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+490	NVDA	OHLC	2026-09-11	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+491	NVDA	OHLC	2026-07-29	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+492	NVDA	OHLC	2026-09-01	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+493	NVDA	OHLC	2026-06-08	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+494	NVDA	OHLC	2026-06-24	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+495	NVDA	OHLC	2026-05-28	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+496	NVDA	OHLC	2026-09-14	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+497	NVDA	OHLC	2026-07-14	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+339	MSFT	OHLC	2026-07-02	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+340	MSFT	OHLC	2026-06-05	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+341	MSFT	OHLC	2026-06-15	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+342	MSFT	OHLC	2026-09-16	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+343	MSFT	OHLC	2026-09-17	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+344	MSFT	OHLC	2026-08-13	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+345	MSFT	OHLC	2026-06-03	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+346	MSFT	OHLC	2026-09-23	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+347	MSFT	OHLC	2026-06-02	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+348	MSFT	OHLC	2026-07-21	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+349	MSFT	OHLC	2026-09-24	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+350	MSFT	OHLC	2026-05-05	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+351	MSFT	OHLC	2026-08-17	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+352	MSFT	OHLC	2026-09-03	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+353	MSFT	OHLC	2026-09-04	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+354	MSFT	OHLC	2026-08-04	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+355	MSFT	OHLC	2026-06-23	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+356	MSFT	OHLC	2026-05-14	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+357	MSFT	OHLC	2026-09-14	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+358	MSFT	OHLC	2026-09-02	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+359	MSFT	OHLC	2026-06-10	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+360	MSFT	OHLC	2026-05-12	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+361	MSFT	OHLC	2026-08-11	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+362	MSFT	OHLC	2026-05-22	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+363	MSFT	OHLC	2026-05-29	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+364	MSFT	OHLC	2026-07-15	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+365	MSFT	OHLC	2026-05-08	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+366	MSFT	OHLC	2026-06-12	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+367	MSFT	OHLC	2026-07-24	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+368	MSFT	OHLC	2026-08-27	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+369	MSFT	OHLC	2026-08-20	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+370	MSFT	OHLC	2026-08-06	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+371	MSFT	OHLC	2026-08-10	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+372	MSFT	OHLC	2026-06-17	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+373	MSFT	OHLC	2026-05-21	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+374	MSFT	OHLC	2026-07-08	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+375	MSFT	OHLC	2026-06-18	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+376	MSFT	OHLC	2026-09-15	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+377	MSFT	OHLC	2026-05-07	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+378	MSFT	OHLC	2026-07-20	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+379	MSFT	OHLC	2026-08-14	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+380	MSFT	OHLC	2026-09-18	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+381	MSFT	OHLC	2026-08-25	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+382	MSFT	OHLC	2026-08-24	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+383	MSFT	OHLC	2026-09-22	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+384	MSFT	OHLC	2026-08-19	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+385	MSFT	OHLC	2026-09-10	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+386	MSFT	OHLC	2026-05-15	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+387	MSFT	OHLC	2026-06-09	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+388	MSFT	OHLC	2026-08-03	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+389	MSFT	OHLC	2026-05-13	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+390	MSFT	OHLC	2026-05-26	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+391	MSFT	OHLC	2026-09-09	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+392	MSFT	OHLC	2026-06-24	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+393	MSFT	OHLC	2026-09-11	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+394	MSFT	OHLC	2026-05-11	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+395	MSFT	OHLC	2026-07-13	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+396	MSFT	OHLC	2026-08-31	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+397	MSFT	OHLC	2026-07-28	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+398	MSFT	OHLC	2026-07-27	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+399	MSFT	OHLC	2026-08-21	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+400	MSFT	OHLC	2026-07-29	SUCCESS	1	2026-09-28 13:55:52.000469	\N
+498	NVDA	OHLC	2026-07-23	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+499	NVDA	OHLC	2026-08-05	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+500	NVDA	OHLC	2026-08-24	SUCCESS	1	2026-09-28 13:56:07.540228	\N
+501	TSLA	OHLC	2026-08-06	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+502	TSLA	OHLC	2026-09-09	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+503	TSLA	OHLC	2026-06-18	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+504	TSLA	OHLC	2026-05-13	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+505	TSLA	OHLC	2026-09-03	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+506	TSLA	OHLC	2026-09-11	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+507	TSLA	OHLC	2026-06-26	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+508	TSLA	OHLC	2026-06-23	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+509	TSLA	OHLC	2026-08-07	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+510	TSLA	OHLC	2026-05-28	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+511	TSLA	OHLC	2026-09-18	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+512	TSLA	OHLC	2026-08-10	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+513	TSLA	OHLC	2026-06-11	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+514	TSLA	OHLC	2026-08-05	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+515	TSLA	OHLC	2026-07-09	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+516	TSLA	OHLC	2026-05-21	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+517	TSLA	OHLC	2026-07-16	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+518	TSLA	OHLC	2026-09-15	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+519	TSLA	OHLC	2026-07-13	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+520	TSLA	OHLC	2026-07-23	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+521	TSLA	OHLC	2026-09-23	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+522	TSLA	OHLC	2026-05-18	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+523	TSLA	OHLC	2026-09-10	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+524	TSLA	OHLC	2026-05-29	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+525	TSLA	OHLC	2026-07-06	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+526	TSLA	OHLC	2026-07-17	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+527	TSLA	OHLC	2026-08-12	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+528	TSLA	OHLC	2026-06-17	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+529	TSLA	OHLC	2026-08-28	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+530	TSLA	OHLC	2026-09-01	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+531	TSLA	OHLC	2026-09-04	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+532	TSLA	OHLC	2026-05-19	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+533	TSLA	OHLC	2026-08-27	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+534	TSLA	OHLC	2026-05-27	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+535	TSLA	OHLC	2026-09-21	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+536	TSLA	OHLC	2026-06-08	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+537	TSLA	OHLC	2026-05-06	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+538	TSLA	OHLC	2026-05-15	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+539	TSLA	OHLC	2026-05-26	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+540	TSLA	OHLC	2026-05-12	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+541	TSLA	OHLC	2026-08-03	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+542	TSLA	OHLC	2026-07-21	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+543	TSLA	OHLC	2026-05-22	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+544	TSLA	OHLC	2026-06-16	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+545	TSLA	OHLC	2026-06-05	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+546	TSLA	OHLC	2026-08-31	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+547	TSLA	OHLC	2026-08-14	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+548	TSLA	OHLC	2026-07-07	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+549	TSLA	OHLC	2026-08-21	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+550	TSLA	OHLC	2026-07-28	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+551	TSLA	OHLC	2026-09-16	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+552	TSLA	OHLC	2026-09-02	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+553	TSLA	OHLC	2026-05-14	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+554	TSLA	OHLC	2026-09-17	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+555	TSLA	OHLC	2026-05-08	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+556	TSLA	OHLC	2026-06-25	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+557	TSLA	OHLC	2026-07-24	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+558	TSLA	OHLC	2026-06-22	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+559	TSLA	OHLC	2026-07-14	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+560	TSLA	OHLC	2026-07-29	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+561	TSLA	OHLC	2026-07-30	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+562	TSLA	OHLC	2026-05-11	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+563	TSLA	OHLC	2026-09-22	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+564	TSLA	OHLC	2026-06-03	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+565	TSLA	OHLC	2026-07-31	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+566	TSLA	OHLC	2026-06-04	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+567	TSLA	OHLC	2026-08-26	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+568	TSLA	OHLC	2026-07-10	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+569	TSLA	OHLC	2026-08-20	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+570	TSLA	OHLC	2026-07-20	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+571	TSLA	OHLC	2026-06-15	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+572	TSLA	OHLC	2026-07-08	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+573	TSLA	OHLC	2026-08-19	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+574	TSLA	OHLC	2026-08-24	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+575	TSLA	OHLC	2026-07-15	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+576	TSLA	OHLC	2026-08-11	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+577	TSLA	OHLC	2026-05-05	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+578	TSLA	OHLC	2026-07-02	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+579	TSLA	OHLC	2026-09-08	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+580	TSLA	OHLC	2026-06-10	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+581	TSLA	OHLC	2026-06-30	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+582	TSLA	OHLC	2026-09-24	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+583	TSLA	OHLC	2026-08-17	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+584	TSLA	OHLC	2026-07-01	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+585	TSLA	OHLC	2026-06-24	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+586	TSLA	OHLC	2026-08-04	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+587	TSLA	OHLC	2026-05-20	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+588	TSLA	OHLC	2026-08-13	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+589	TSLA	OHLC	2026-05-07	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+590	TSLA	OHLC	2026-08-25	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+591	TSLA	OHLC	2026-07-27	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+592	TSLA	OHLC	2026-06-01	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+593	TSLA	OHLC	2026-06-12	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+594	TSLA	OHLC	2026-06-29	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+595	TSLA	OHLC	2026-09-14	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+596	TSLA	OHLC	2026-06-09	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+597	TSLA	OHLC	2026-06-02	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+598	TSLA	OHLC	2026-08-18	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+599	TSLA	OHLC	2026-07-22	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+600	TSLA	OHLC	2026-09-25	SUCCESS	1	2026-09-28 13:56:23.157493	\N
+601	GOOGL	OHLC	2026-05-15	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+602	GOOGL	OHLC	2026-07-15	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+603	GOOGL	OHLC	2026-09-02	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+604	GOOGL	OHLC	2026-06-25	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+605	GOOGL	OHLC	2026-07-13	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+606	GOOGL	OHLC	2026-08-26	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+607	GOOGL	OHLC	2026-07-14	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+608	GOOGL	OHLC	2026-07-28	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+609	GOOGL	OHLC	2026-05-21	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+610	GOOGL	OHLC	2026-06-10	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+611	GOOGL	OHLC	2026-08-21	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+612	GOOGL	OHLC	2026-05-29	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+613	GOOGL	OHLC	2026-06-29	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+614	GOOGL	OHLC	2026-07-23	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+615	GOOGL	OHLC	2026-05-27	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+616	GOOGL	OHLC	2026-09-25	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+617	GOOGL	OHLC	2026-07-07	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+618	GOOGL	OHLC	2026-08-27	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+619	GOOGL	OHLC	2026-09-04	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+620	GOOGL	OHLC	2026-09-08	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+621	GOOGL	OHLC	2026-07-06	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+622	GOOGL	OHLC	2026-05-05	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+623	GOOGL	OHLC	2026-09-18	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+624	GOOGL	OHLC	2026-05-07	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+625	GOOGL	OHLC	2026-08-24	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+626	GOOGL	OHLC	2026-08-17	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+627	GOOGL	OHLC	2026-08-13	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+628	GOOGL	OHLC	2026-07-08	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+629	GOOGL	OHLC	2026-05-12	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+630	GOOGL	OHLC	2026-07-17	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+631	GOOGL	OHLC	2026-06-04	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+632	GOOGL	OHLC	2026-05-14	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+633	GOOGL	OHLC	2026-08-11	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+634	GOOGL	OHLC	2026-06-22	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+635	GOOGL	OHLC	2026-07-01	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+636	GOOGL	OHLC	2026-09-14	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+637	GOOGL	OHLC	2026-05-19	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+638	GOOGL	OHLC	2026-06-01	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+639	GOOGL	OHLC	2026-05-20	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+640	GOOGL	OHLC	2026-07-24	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+641	GOOGL	OHLC	2026-08-12	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+642	GOOGL	OHLC	2026-08-14	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+643	GOOGL	OHLC	2026-09-22	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+644	GOOGL	OHLC	2026-06-11	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+645	GOOGL	OHLC	2026-08-03	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+646	GOOGL	OHLC	2026-08-06	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+647	GOOGL	OHLC	2026-06-30	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+648	GOOGL	OHLC	2026-06-09	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+649	GOOGL	OHLC	2026-09-09	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+650	GOOGL	OHLC	2026-09-23	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+651	GOOGL	OHLC	2026-06-17	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+652	GOOGL	OHLC	2026-09-21	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+653	GOOGL	OHLC	2026-08-19	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+654	GOOGL	OHLC	2026-08-04	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+655	GOOGL	OHLC	2026-09-24	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+656	GOOGL	OHLC	2026-07-29	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+657	GOOGL	OHLC	2026-09-11	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+658	GOOGL	OHLC	2026-09-01	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+659	GOOGL	OHLC	2026-07-02	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+660	GOOGL	OHLC	2026-09-15	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+661	GOOGL	OHLC	2026-09-16	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+662	GOOGL	OHLC	2026-07-20	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+663	GOOGL	OHLC	2026-07-22	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+664	GOOGL	OHLC	2026-08-31	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+665	GOOGL	OHLC	2026-09-17	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+666	GOOGL	OHLC	2026-08-18	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+667	GOOGL	OHLC	2026-08-07	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+668	GOOGL	OHLC	2026-06-08	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+669	GOOGL	OHLC	2026-05-06	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+670	GOOGL	OHLC	2026-05-22	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+671	GOOGL	OHLC	2026-06-03	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+672	GOOGL	OHLC	2026-05-08	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+673	GOOGL	OHLC	2026-07-31	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+674	GOOGL	OHLC	2026-05-28	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+675	GOOGL	OHLC	2026-06-24	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+676	GOOGL	OHLC	2026-06-05	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+677	GOOGL	OHLC	2026-07-27	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+678	GOOGL	OHLC	2026-06-16	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+679	GOOGL	OHLC	2026-05-26	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+680	GOOGL	OHLC	2026-07-30	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+681	GOOGL	OHLC	2026-06-26	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+682	GOOGL	OHLC	2026-08-20	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+683	GOOGL	OHLC	2026-09-03	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+684	GOOGL	OHLC	2026-07-21	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+685	GOOGL	OHLC	2026-06-18	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+686	GOOGL	OHLC	2026-07-16	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+687	GOOGL	OHLC	2026-06-23	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+688	GOOGL	OHLC	2026-08-10	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+689	GOOGL	OHLC	2026-09-10	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+690	GOOGL	OHLC	2026-07-10	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+691	GOOGL	OHLC	2026-08-25	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+692	GOOGL	OHLC	2026-05-11	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+693	GOOGL	OHLC	2026-06-12	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+694	GOOGL	OHLC	2026-06-15	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+695	GOOGL	OHLC	2026-05-13	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+696	GOOGL	OHLC	2026-05-18	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+697	GOOGL	OHLC	2026-06-02	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+698	GOOGL	OHLC	2026-08-05	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+699	GOOGL	OHLC	2026-08-28	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+700	GOOGL	OHLC	2026-07-09	SUCCESS	1	2026-09-28 13:56:38.705688	\N
+\.
+
+
+--
+-- TOC entry 5112 (class 0 OID 16389)
+-- Dependencies: 221
+-- Data for Name: companies; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.companies (symbol, company_name, created_at) FROM stdin;
+AAPL	Apple Inc.	2026-09-23 15:43:43.573632
+MSFT	Microsoft Corporation	2026-09-23 15:43:43.573632
+TSLA	Tesla Inc	2026-09-23 15:43:43.573632
+GOOGL	Alphabet Inc Class A	2026-09-23 17:58:01.013017
+AMZN	Amazon.com Inc	2026-09-23 17:58:16.310797
+NVDA	NVIDIA Corporation	2026-09-23 17:58:31.600865
+META	Meta Platforms Inc.	2026-09-23 17:58:47.29588
+IBM	International Business Machines	2026-09-24 13:25:25.225072
+\.
+
+
+--
+-- TOC entry 5114 (class 0 OID 16453)
+-- Dependencies: 223
+-- Data for Name: daily_stock_prices; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.daily_stock_prices (id, symbol, trade_date, open_price, high_price, low_price, close_price, volume, created_at) FROM stdin;
+1	AAPL	2026-09-23	341.075	341.8	335.5	337.02	31658823	2026-09-24 14:16:39.014084
+2	AAPL	2026-09-22	340.135	345.34	338.75	339.75	40711786	2026-09-24 14:16:39.014084
+3	AAPL	2026-09-21	335.28	339.64	333.05	338.98	34999229	2026-09-24 14:16:39.014084
+4	AAPL	2026-09-18	337.905	338.49	332.53	336.13	86588203	2026-09-24 14:16:39.014084
+5	AAPL	2026-09-17	334.77	338.34	330.1833	337	36700225	2026-09-24 14:16:39.014084
+6	AAPL	2026-09-16	332.53	335.48	330.7	332.41	35981000	2026-09-24 14:16:39.014084
+7	AAPL	2026-09-15	330.135	331.78	328.35	331.34	31748183	2026-09-24 14:16:39.014084
+8	AAPL	2026-09-14	334.79	335.5	331.34	333.08	39269147	2026-09-24 14:16:39.014084
+9	AAPL	2026-09-11	327.45	336.22	326.3	332.27	50716865	2026-09-24 14:16:39.014084
+10	AAPL	2026-09-10	316.67	326.74	316.51	326.57	70011913	2026-09-24 14:16:39.014084
+11	AAPL	2026-09-09	315.485	319.15	309.9	315.34	65639962	2026-09-24 14:16:39.014084
+12	AAPL	2026-09-08	317.1	320.7	314.9	316.22	35477090	2026-09-24 14:16:39.014084
+13	AAPL	2026-09-04	328.305	328.93	317.86	319.97	39606884	2026-09-24 14:16:39.014084
+14	AAPL	2026-09-03	324.87	330.81	324.11	328.21	37225838	2026-09-24 14:16:39.014084
+15	AAPL	2026-09-02	326.865	328.4	323.53	324.96	33776370	2026-09-24 14:16:39.014084
+16	AAPL	2026-09-01	316.98	327.3	314.73	325.13	53167388	2026-09-24 14:16:39.014084
+17	AAPL	2026-08-31	319.6	321.235	312.8	316.85	41242724	2026-09-24 14:16:39.014084
+18	AAPL	2026-08-28	316.845	322.37	315.4504	319.7	38649398	2026-09-24 14:16:39.014084
+19	AAPL	2026-08-27	310.545	315.4	309.4001	314.58	32419233	2026-09-24 14:16:39.014084
+20	AAPL	2026-08-26	310.3	315.43	308.8001	313.45	34024486	2026-09-24 14:16:39.014084
+21	AAPL	2026-08-25	310.79	313.59	308.21	309.9	25869807	2026-09-24 14:16:39.014084
+22	AAPL	2026-08-24	311.47	313.36	309.97	310.34	34673582	2026-09-24 14:16:39.014084
+23	AAPL	2026-08-21	312.05	312.38	307.01	309.35	46876815	2026-09-24 14:16:39.014084
+24	AAPL	2026-08-20	317.455	320.28	310.65	311.3	40959184	2026-09-24 14:16:39.014084
+25	AAPL	2026-08-19	310.14	319.2799	309.6	316.83	50505646	2026-09-24 14:16:39.014084
+26	AAPL	2026-08-18	307.58	311.49	305.74	310.03	53424535	2026-09-24 14:16:39.014084
+27	AAPL	2026-08-17	306.21	307.66	302.939	305.59	38169263	2026-09-24 14:16:39.014084
+28	AAPL	2026-08-14	306	307.49	304.3	305.93	28229375	2026-09-24 14:16:39.014084
+29	AAPL	2026-08-13	304.21	306	302.05	305.26	40349289	2026-09-24 14:16:39.014084
+30	AAPL	2026-08-12	305.1	305.66	300.57	302.25	41657768	2026-09-24 14:16:39.014084
+31	AAPL	2026-08-11	307.75	309.97	302.79	304.91	37476746	2026-09-24 14:16:39.014084
+32	AAPL	2026-08-10	306.83	308.26	304.61	308.26	44812503	2026-09-24 14:16:39.014084
+33	AAPL	2026-08-07	311.45	314.81	310.74	313.33	34437191	2026-09-24 14:16:39.014084
+34	AAPL	2026-08-06	314.34	316.2894	309.23	312.41	46139901	2026-09-24 14:16:39.014084
+35	AAPL	2026-08-05	309.36	311.71	305.67	311	49438763	2026-09-24 14:16:39.014084
+36	AAPL	2026-08-04	302.725	310.42	301.32	309.38	68000969	2026-09-24 14:16:39.014084
+37	AAPL	2026-08-03	309.58	311.8	302.56	303.42	75051951	2026-09-24 14:16:39.014084
+38	AAPL	2026-07-31	304.81	310.69	300	308.91	132489137	2026-09-24 14:16:39.014084
+39	AAPL	2026-07-30	333.1	334.75	329.59	333.43	74817792	2026-09-24 14:16:39.014084
+40	AAPL	2026-07-29	339.73	344.5699	337.3501	338.19	56090840	2026-09-24 14:16:39.014084
+41	AAPL	2026-07-28	340.03	342.89	335.6	340.08	51859042	2026-09-24 14:16:39.014084
+42	AAPL	2026-07-27	334.54	339.57	334.02	336.91	49604297	2026-09-24 14:16:39.014084
+43	AAPL	2026-07-24	321.79	334.37	321.62	333.02	47489415	2026-09-24 14:16:39.014084
+44	AAPL	2026-07-23	321.73	323.3	319.35	321.66	40840778	2026-09-24 14:16:39.014084
+45	AAPL	2026-07-22	327.87	328.9995	323.34	325.89	38755929	2026-09-24 14:16:39.014084
+46	AAPL	2026-07-21	323.13	329.6	322.2204	327.74	41338917	2026-09-24 14:16:39.014084
+47	AAPL	2026-07-20	333.505	333.71	323.68	326.59	53468008	2026-09-24 14:16:39.014084
+48	AAPL	2026-07-17	331.98	334.99	329.0006	333.74	63407059	2026-09-24 14:16:39.014084
+49	AAPL	2026-07-16	328.005	334.68	326.79	333.26	62970617	2026-09-24 14:16:39.014084
+50	AAPL	2026-07-15	317.615	328.73	317.32	327.5	60957644	2026-09-24 14:16:39.014084
+51	AAPL	2026-07-14	313.76	316.19	311.91	314.86	36336829	2026-09-24 14:16:39.014084
+52	AAPL	2026-07-13	317.015	323.45	315.78	317.31	43257804	2026-09-24 14:16:39.014084
+53	AAPL	2026-07-10	314.72	316.91	312.17	315.32	34132321	2026-09-24 14:16:39.014084
+54	AAPL	2026-07-09	310.51	316.53	308.16	316.22	48124490	2026-09-24 14:16:39.014084
+55	AAPL	2026-07-08	311.91	314.82	307.05	313.39	41323480	2026-09-24 14:16:39.014084
+56	AAPL	2026-07-07	315.29	315.48	310.15	310.66	42490002	2026-09-24 14:16:39.014084
+57	AAPL	2026-07-06	307.36	314.2	307	312.66	53589977	2026-09-24 14:16:39.014084
+58	AAPL	2026-07-02	294.12	309.42	293.68	308.63	75400626	2026-09-24 14:16:39.014084
+59	AAPL	2026-07-01	293.44	296.59	289.195	294.38	50164232	2026-09-24 14:16:39.014084
+60	AAPL	2026-06-30	281.17	289.94	280.695	289.36	65100155	2026-09-24 14:16:39.014084
+61	AAPL	2026-06-29	286.73	288.3697	279.85	281.74	66427002	2026-09-24 14:16:39.014084
+62	AAPL	2026-06-26	275	285.95	274.21	283.78	261775450	2026-09-24 14:16:39.014084
+63	AAPL	2026-06-25	287.4	288.8	273.75	275.15	107253659	2026-09-24 14:16:39.014084
+64	AAPL	2026-06-24	295.355	299.7	292.94	293.08	53081859	2026-09-24 14:16:39.014084
+65	AAPL	2026-06-23	297.538	301.64	294.18	294.3	52010929	2026-09-24 14:16:39.014084
+66	AAPL	2026-06-22	297.31	302.42	296.76	297.01	44879914	2026-09-24 14:16:39.014084
+67	AAPL	2026-06-18	298.11	300.57	295.62	298.01	85962201	2026-09-24 14:16:39.014084
+68	AAPL	2026-06-17	300.845	302.07	294.36	295.95	42745060	2026-09-24 14:16:39.014084
+69	AAPL	2026-06-16	295.245	300.48	293.97	299.24	39874404	2026-09-24 14:16:39.014084
+70	AAPL	2026-06-15	294.12	297.78	291.7	296.42	45732573	2026-09-24 14:16:39.014084
+71	AAPL	2026-06-12	296.03	297.14	289.62	291.13	38784789	2026-09-24 14:16:39.014084
+72	AAPL	2026-06-11	293.72	297	289.59	295.63	42572497	2026-09-24 14:16:39.014084
+73	AAPL	2026-06-10	290.74	294.75	287.38	291.58	52793266	2026-09-24 14:16:39.014084
+74	AAPL	2026-06-09	300.275	300.75	287.78	290.55	70108847	2026-09-24 14:16:39.014084
+75	AAPL	2026-06-08	308.739	317.4	301.17	301.54	77949082	2026-09-24 14:16:39.014084
+76	AAPL	2026-06-05	312.86	315.17	307.15	307.34	65310502	2026-09-24 14:16:39.014084
+77	AAPL	2026-06-04	313.23	313.54	309.65	311.23	44869134	2026-09-24 14:16:39.014084
+78	AAPL	2026-06-03	314.175	316.94	308.85	310.26	50836705	2026-09-24 14:16:39.014084
+79	AAPL	2026-06-02	307.46	315.45	306.685	315.2	44534716	2026-09-24 14:16:39.014084
+80	AAPL	2026-06-01	309.625	310.94	305.02	306.31	48849933	2026-09-24 14:16:39.014084
+81	AAPL	2026-05-29	311.775	315	309.53	312.06	70026752	2026-09-24 14:16:39.014084
+82	AAPL	2026-05-28	310.68	312.8	309.57	312.51	48220390	2026-09-24 14:16:39.014084
+83	AAPL	2026-05-27	308.33	313.26	308.3	310.85	50430919	2026-09-24 14:16:39.014084
+84	AAPL	2026-05-26	309.56	311.82	307.67	308.33	48000493	2026-09-24 14:16:39.014084
+85	AAPL	2026-05-22	306.12	311.4	305.84	308.82	43670223	2026-09-24 14:16:39.014084
+86	AAPL	2026-05-21	301.055	305.54	300.4	304.99	42965126	2026-09-24 14:16:39.014084
+87	AAPL	2026-05-20	298.18	302.8	298.08	302.25	37307876	2026-09-24 14:16:39.014084
+88	AAPL	2026-05-19	296.97	300.51	296.35	298.97	42243561	2026-09-24 14:16:39.014084
+89	AAPL	2026-05-18	300.24	300.66	294.91	297.84	34482959	2026-09-24 14:16:39.014084
+90	AAPL	2026-05-15	297.9	303.2	296.52	300.23	54862836	2026-09-24 14:16:39.014084
+91	AAPL	2026-05-14	299.82	300.45	295.38	298.21	35324922	2026-09-24 14:16:39.014084
+92	AAPL	2026-05-13	293.5	300.92	293.5	298.87	52684260	2026-09-24 14:16:39.014084
+93	AAPL	2026-05-12	292.56	295.27	292.56	294.8	45748129	2026-09-24 14:16:39.014084
+94	AAPL	2026-05-11	291.979	293.88	290.23	292.68	42247285	2026-09-24 14:16:39.014084
+95	AAPL	2026-05-08	290.01	294.76	290	293.32	52692761	2026-09-24 14:16:39.014084
+96	AAPL	2026-05-07	289.27	292.13	285.78	287.44	45224300	2026-09-24 14:16:39.014084
+97	AAPL	2026-05-06	281.915	288.03	281.07	287.51	58336072	2026-09-24 14:16:39.014084
+98	AAPL	2026-05-05	276.925	284.57	276.501	284.18	49311712	2026-09-24 14:16:39.014084
+99	AAPL	2026-05-04	279.655	280.63	274.8601	276.83	46668401	2026-09-24 14:16:39.014084
+100	AAPL	2026-05-01	278.855	287.22	278.37	280.14	79915442	2026-09-24 14:16:39.014084
+101	MSFT	2026-09-23	500.755	509.44	495.88	500.59	19445555	2026-09-24 14:17:25.346309
+102	MSFT	2026-09-22	507.32	508.5	493.65	498	21652838	2026-09-24 14:17:25.346309
+103	MSFT	2026-09-21	494.945	501.87	491.33	501.61	27959944	2026-09-24 14:17:25.346309
+104	MSFT	2026-09-18	497.965	498.65	491.1	493.78	39622288	2026-09-24 14:17:25.346309
+105	MSFT	2026-09-17	497.795	501.47	493.17	497.75	17841640	2026-09-24 14:17:25.346309
+106	MSFT	2026-09-16	493.03	495.97	487.23	490.3	16670285	2026-09-24 14:17:25.346309
+107	MSFT	2026-09-15	500.06	505.9	495.54	497.12	17794612	2026-09-24 14:17:25.346309
+108	MSFT	2026-09-14	497.06	509.95	495.3416	505.41	23091892	2026-09-24 14:17:25.346309
+109	MSFT	2026-09-11	495.65	498.97	492.58	495.63	14518435	2026-09-24 14:17:25.346309
+110	MSFT	2026-09-10	488.32	494.52	486	492.44	16038805	2026-09-24 14:17:25.346309
+111	MSFT	2026-09-09	493.07	494.39	489.8	491.65	12889572	2026-09-24 14:17:25.346309
+112	MSFT	2026-09-08	493.01	495.19	490.15	493.95	18882338	2026-09-24 14:17:25.346309
+113	MSFT	2026-09-04	510	511	499.36	499.7	18101758	2026-09-24 14:17:25.346309
+114	MSFT	2026-09-03	501.66	515.65	500.8	510.12	24125893	2026-09-24 14:17:25.346309
+115	MSFT	2026-09-02	499.85	500.27	493.81	496.82	15336074	2026-09-24 14:17:25.346309
+116	MSFT	2026-09-01	497.52	505.97	496.78	501.02	21046892	2026-09-24 14:17:25.346309
+117	MSFT	2026-08-31	510.38	512.19	506.39	507.29	27208911	2026-09-24 14:17:25.346309
+118	MSFT	2026-08-28	505.33	517.78	504.8675	513.53	29207325	2026-09-24 14:17:25.346309
+119	MSFT	2026-08-27	494.88	506.48	490.08	505.06	28688756	2026-09-24 14:17:25.346309
+120	MSFT	2026-08-26	487.85	497.4	487.31	496.37	20758853	2026-09-24 14:17:25.346309
+121	MSFT	2026-08-25	485.44	492.435	484.3	491.71	19518987	2026-09-24 14:17:25.346309
+122	MSFT	2026-08-24	483.205	490.605	481.86	487.31	17230751	2026-09-24 14:17:25.346309
+123	MSFT	2026-08-21	479.88	486.36	478.53	483.24	22510774	2026-09-24 14:17:25.346309
+124	MSFT	2026-08-20	483.3	484.16	479.5	481.15	20020822	2026-09-24 14:17:25.346309
+125	MSFT	2026-08-19	480.065	489.3	479.36	484.31	19961871	2026-09-24 14:17:25.346309
+126	MSFT	2026-08-18	481.54	484.27	477.1505	481.63	24087591	2026-09-24 14:17:25.346309
+127	MSFT	2026-08-17	490.14	492.66	478.41	480.35	29635848	2026-09-24 14:17:25.346309
+128	MSFT	2026-08-14	496.355	500.01	493.92	495.4	16217647	2026-09-24 14:17:25.346309
+129	MSFT	2026-08-13	493.265	501.34	493.01	496.88	23038979	2026-09-24 14:17:25.346309
+130	MSFT	2026-08-12	499.99	501.5	491.52	492.43	29001478	2026-09-24 14:17:25.346309
+131	MSFT	2026-08-11	504.33	505.33	499.55	503.81	23049791	2026-09-24 14:17:25.346309
+132	MSFT	2026-08-10	503.44	513.73	502.27	506.06	31206137	2026-09-24 14:17:25.346309
+133	MSFT	2026-08-07	499.21	505.18	498.73	499.99	28846235	2026-09-24 14:17:25.346309
+134	MSFT	2026-08-06	488.55	501.555	488.52	499.86	36441544	2026-09-24 14:17:25.346309
+135	MSFT	2026-08-05	496.355	498.24	485.68	487.46	33388871	2026-09-24 14:17:25.346309
+136	MSFT	2026-08-04	480.9	499.4399	479.17	492.81	50455454	2026-09-24 14:17:25.346309
+137	MSFT	2026-08-03	476.125	491.65	475	487.65	66762074	2026-09-24 14:17:25.346309
+138	MSFT	2026-07-31	450	466.84	449.33	464.72	60845971	2026-09-24 14:17:25.346309
+139	MSFT	2026-07-30	437.9	458.69	432.44	451.1	110160704	2026-09-24 14:17:25.346309
+140	MSFT	2026-07-29	393.4	401.25	388.74	390.54	47209032	2026-09-24 14:17:25.346309
+141	MSFT	2026-07-28	393.16	400.32	391.3	393.35	32367546	2026-09-24 14:17:25.346309
+142	MSFT	2026-07-27	390.08	394.2	387.99	389.1	27856160	2026-09-24 14:17:25.346309
+143	MSFT	2026-07-24	387.05	389.03	380.65	381.7	27659388	2026-09-24 14:17:25.346309
+144	MSFT	2026-07-23	389.965	391.78	377.39	381.58	30351752	2026-09-24 14:17:25.346309
+145	MSFT	2026-07-22	399.58	401	386.96	390.34	28142511	2026-09-24 14:17:25.346309
+146	MSFT	2026-07-21	398.805	401.47	396.32	397.75	24126632	2026-09-24 14:17:25.346309
+147	MSFT	2026-07-20	391.41	403.18	389.65	402.29	27915762	2026-09-24 14:17:25.346309
+148	MSFT	2026-07-17	394.855	398.39	389.39	393.82	33049842	2026-09-24 14:17:25.346309
+149	MSFT	2026-07-16	398.31	405.99	392.0501	401.1	37047443	2026-09-24 14:17:25.346309
+150	MSFT	2026-07-15	387.8	398.96	386.4	395.63	36253745	2026-09-24 14:17:25.346309
+151	MSFT	2026-07-14	382.82	388.19	378.65	384.93	27863916	2026-09-24 14:17:25.346309
+152	MSFT	2026-07-13	387.745	393.65	384.15	390.99	28914877	2026-09-24 14:17:25.346309
+153	MSFT	2026-07-10	387.8	391.91	381.5	385.1	24644605	2026-09-24 14:17:25.346309
+154	MSFT	2026-07-09	374.45	384.65	373.35	384.36	31083197	2026-09-24 14:17:25.346309
+155	MSFT	2026-07-08	384.03	385.31	381.33	383.34	25908255	2026-09-24 14:17:25.346309
+156	MSFT	2026-07-07	392.49	395.57	388.22	388.84	29297524	2026-09-24 14:17:25.346309
+157	MSFT	2026-07-06	387.04	389.15	381.22	386.74	34224543	2026-09-24 14:17:25.346309
+158	MSFT	2026-07-02	384.48	392.2	383.7	390.49	42194409	2026-09-24 14:17:25.346309
+159	MSFT	2026-07-01	380.825	388.83	374.89	384.28	48065801	2026-09-24 14:17:25.346309
+160	MSFT	2026-06-30	371.03	374.15	367.45	373.02	44945696	2026-09-24 14:17:25.346309
+161	MSFT	2026-06-29	377.5	380.5	359.9	368.57	51229885	2026-09-24 14:17:25.346309
+162	MSFT	2026-06-26	357.15	376.61	355.43	372.97	186201631	2026-09-24 14:17:25.346309
+163	MSFT	2026-06-25	362.77	364.23	349.2	352.83	66360473	2026-09-24 14:17:25.346309
+164	MSFT	2026-06-24	371.57	378.88	364.78	365.46	44509854	2026-09-24 14:17:25.346309
+165	MSFT	2026-06-23	372.38	377.22	370.67	373.94	40647605	2026-09-24 14:17:25.346309
+166	MSFT	2026-06-22	375.74	381.63	367.07	367.34	45171106	2026-09-24 14:17:25.346309
+167	MSFT	2026-06-18	377.82	381.37	373.28	379.4	59714157	2026-09-24 14:17:25.346309
+168	MSFT	2026-06-17	390.25	390.37	377.32	378.91	41987834	2026-09-24 14:17:25.346309
+169	MSFT	2026-06-16	395.79	396.84	390.69	393.83	31506846	2026-09-24 14:17:25.346309
+170	MSFT	2026-06-15	396.795	401.75	392.845	399.76	32266437	2026-09-24 14:17:25.346309
+171	MSFT	2026-06-12	391.43	391.74	382.27	390.74	34922036	2026-09-24 14:17:25.346309
+172	MSFT	2026-06-11	395.205	396.85	384	390.34	47224135	2026-09-24 14:17:25.346309
+173	MSFT	2026-06-10	398.55	405.04	397.16	397.36	32576041	2026-09-24 14:17:25.346309
+174	MSFT	2026-06-09	409.03	411.98	398.48	403.41	35317302	2026-09-24 14:17:25.346309
+175	MSFT	2026-06-08	414.14	417.1599	408.56	411.74	32086714	2026-09-24 14:17:25.346309
+176	MSFT	2026-06-05	428.34	429.47	414.4	416.67	34782164	2026-09-24 14:17:25.346309
+177	MSFT	2026-06-04	435.81	436.15	426.41	428.05	26899511	2026-09-24 14:17:25.346309
+178	MSFT	2026-06-03	438.45	440.39	424.25	427.34	39037007	2026-09-24 14:17:25.346309
+179	MSFT	2026-06-02	446.88	453.5	440.43	441.31	37036801	2026-09-24 14:17:25.346309
+180	MSFT	2026-06-01	464.84	466.32	458.27	460.52	53628910	2026-09-24 14:17:25.346309
+181	MSFT	2026-05-29	432.545	450.33	432.36	450.24	79654376	2026-09-24 14:17:25.346309
+182	MSFT	2026-05-28	412.975	429.49	412.67	426.99	47250541	2026-09-24 14:17:25.346309
+183	MSFT	2026-05-27	411.01	415.94	409.58	412.67	28901479	2026-09-24 14:17:25.346309
+184	MSFT	2026-05-26	416.43	419.77	413.02	416.03	30398049	2026-09-24 14:17:25.346309
+185	MSFT	2026-05-22	419.535	424.4	416.33	418.57	22390344	2026-09-24 14:17:25.346309
+186	MSFT	2026-05-21	424.75	426.34	415.71	419.09	31393469	2026-09-24 14:17:25.346309
+187	MSFT	2026-05-20	414.165	422.1	411.3001	421.06	27655979	2026-09-24 14:17:25.346309
+188	MSFT	2026-05-19	429.9	432.7	416.49	417.42	33018678	2026-09-24 14:17:25.346309
+189	MSFT	2026-05-18	416.62	425.12	415.61	423.54	32564130	2026-09-24 14:17:25.346309
+190	MSFT	2026-05-15	414.27	428.17	412.91	421.92	50771160	2026-09-24 14:17:25.346309
+191	MSFT	2026-05-14	404.48	411.84	400.88	409.43	27077542	2026-09-24 14:17:25.346309
+192	MSFT	2026-05-13	403.2	406.31	401.03	405.21	29667073	2026-09-24 14:17:25.346309
+193	MSFT	2026-05-12	414.48	415.5	406.64	407.77	38594221	2026-09-24 14:17:25.346309
+194	MSFT	2026-05-11	407.87	412.69	405.5	412.66	35657943	2026-09-24 14:17:25.346309
+195	MSFT	2026-05-08	417.385	418.63	414	415.12	33383790	2026-09-24 14:17:25.346309
+196	MSFT	2026-05-07	420.11	427.98	418.76	420.77	34942445	2026-09-24 14:17:25.346309
+197	MSFT	2026-05-06	408	418.4228	405.11	413.96	30285898	2026-09-24 14:17:25.346309
+198	MSFT	2026-05-05	415.32	416.7799	408.8	411.38	25700891	2026-09-24 14:17:25.346309
+199	MSFT	2026-05-04	411.54	420.78	410.8	413.62	28066528	2026-09-24 14:17:25.346309
+200	MSFT	2026-05-01	412.8	417.11	410.435	414.44	31372361	2026-09-24 14:17:25.346309
+201	TSLA	2026-09-23	380.1	386.7	377.575	380.12	33522492	2026-09-24 14:18:11.659978
+202	TSLA	2026-09-22	379.069	380.42	372.88	378.9	28229908	2026-09-24 14:18:11.659978
+203	TSLA	2026-09-21	371.635	378.36	371.07	375.3	36599609	2026-09-24 14:18:11.659978
+204	TSLA	2026-09-18	369	370.9	360.751	364.27	51922256	2026-09-24 14:18:11.659978
+205	TSLA	2026-09-17	367.48	374.12	363.22	366.2	38924057	2026-09-24 14:18:11.659978
+206	TSLA	2026-09-16	357.925	365.1	354.8913	358.08	32177388	2026-09-24 14:18:11.659978
+207	TSLA	2026-09-15	358.75	362.39	354.05	356.58	30317727	2026-09-24 14:18:11.659978
+208	TSLA	2026-09-14	359.78	367.73	357.04	358.97	32477181	2026-09-24 14:18:11.659978
+209	TSLA	2026-09-11	364.2	368.66	361.6	365.44	30153019	2026-09-24 14:18:11.659978
+210	TSLA	2026-09-10	360.595	369.21	357.68	363.56	29667241	2026-09-24 14:18:11.659978
+211	TSLA	2026-09-09	368.25	375.44	366	367.81	32564336	2026-09-24 14:18:11.659978
+212	TSLA	2026-09-08	357.095	370	355.75	368.16	51078786	2026-09-24 14:18:11.659978
+213	TSLA	2026-09-04	362.07	364.69	351.3201	354.08	65018209	2026-09-24 14:18:11.659978
+214	TSLA	2026-09-03	365.82	384.04	365.82	376.365	63600987	2026-09-24 14:18:11.659978
+215	TSLA	2026-09-02	360.41	360.62	349.92	357.01	33951909	2026-09-24 14:18:11.659978
+216	TSLA	2026-09-01	360.9	362.7	352.96	356.09	36193926	2026-09-24 14:18:11.659978
+217	TSLA	2026-08-31	347.21	368.92	347.15	367.95	61732258	2026-09-24 14:18:11.659978
+218	TSLA	2026-08-28	357.095	358.8	345.2	348.75	32972214	2026-09-24 14:18:11.659978
+219	TSLA	2026-08-27	346.155	355.74	345.45	354.81	30136164	2026-09-24 14:18:11.659978
+220	TSLA	2026-08-26	345.27	351.93	342.53	345.82	28573007	2026-09-24 14:18:11.659978
+221	TSLA	2026-08-25	349.58	357	349.2003	350.25	29816685	2026-09-24 14:18:11.659978
+222	TSLA	2026-08-24	361.41	363.24	348.26	348.95	39190484	2026-09-24 14:18:11.659978
+223	TSLA	2026-08-21	349.88	366.5	346.9	362.86	59223958	2026-09-24 14:18:11.659978
+224	TSLA	2026-08-20	346.2	347.5	338.96	345.13	30766360	2026-09-24 14:18:11.659978
+225	TSLA	2026-08-19	338.89	351.62	335.7	351.12	36735428	2026-09-24 14:18:11.659978
+226	TSLA	2026-08-18	333.22	340.53	331.12	336.87	27994466	2026-09-24 14:18:11.659978
+227	TSLA	2026-08-17	340.69	345.45	337.48	339.3	26037093	2026-09-24 14:18:11.659978
+228	TSLA	2026-08-14	342.33	351.26	335.3306	342.27	45437144	2026-09-24 14:18:11.659978
+229	TSLA	2026-08-13	327.2	341.64	325.24	339.96	34708303	2026-09-24 14:18:11.659978
+230	TSLA	2026-08-12	335	335.5	323.64	327.51	28698879	2026-09-24 14:18:11.659978
+231	TSLA	2026-08-11	332.8	336.2	329.53	332.81	23345233	2026-09-24 14:18:11.659978
+232	TSLA	2026-08-10	326.595	332.05	326.15	330.88	25003808	2026-09-24 14:18:11.659978
+233	TSLA	2026-08-07	322.34	333.73	321.2508	328.58	39492345	2026-09-24 14:18:11.659978
+234	TSLA	2026-08-06	317.05	323	315.5205	319.53	26033776	2026-09-24 14:18:11.659978
+235	TSLA	2026-08-05	323.42	327.14	320.28	321.55	27820813	2026-09-24 14:18:11.659978
+236	TSLA	2026-08-04	324	329.57	320.7901	327.35	33318303	2026-09-24 14:18:11.659978
+237	TSLA	2026-08-03	310.96	324.65	310.425	322.08	38281362	2026-09-24 14:18:11.659978
+238	TSLA	2026-07-31	309.69	315.5	301.97	311.21	36630560	2026-09-24 14:18:11.659978
+239	TSLA	2026-07-30	302.7	310.87	301.33	308.85	38005390	2026-09-24 14:18:11.659978
+240	TSLA	2026-07-29	307.14	309.06	297.38	298.32	39478039	2026-09-24 14:18:11.659978
+241	TSLA	2026-07-28	305.925	311.16	300.69	307.44	39802421	2026-09-24 14:18:11.659978
+242	TSLA	2026-07-27	313.24	317	304.28	309.22	44919377	2026-09-24 14:18:11.659978
+243	TSLA	2026-07-24	320.72	322.96	306.51	313.03	62760007	2026-09-24 14:18:11.659978
+244	TSLA	2026-07-23	341	342.11	315.735	319.69	115606413	2026-09-24 14:18:11.659978
+245	TSLA	2026-07-22	375.53	380.17	372.9	374.01	30646124	2026-09-24 14:18:11.659978
+246	TSLA	2026-07-21	371.165	384.07	369.98	378.93	32735334	2026-09-24 14:18:11.659978
+247	TSLA	2026-07-20	386.045	386.61	369.425	369.57	33901516	2026-09-24 14:18:11.659978
+248	TSLA	2026-07-17	381.78	385.6899	377.22	380.84	31394594	2026-09-24 14:18:11.659978
+249	TSLA	2026-07-16	392.35	395.31	385.32	391.06	29269113	2026-09-24 14:18:11.659978
+250	TSLA	2026-07-15	399.395	406.5895	390.66	394.46	31549805	2026-09-24 14:18:11.659978
+251	TSLA	2026-07-14	399.05	402.22	394.76	396.18	23384992	2026-09-24 14:18:11.659978
+252	TSLA	2026-07-13	404.61	405.57	391.37	394.76	32809171	2026-09-24 14:18:11.659978
+253	TSLA	2026-07-10	410.49	413.16	402.8101	407.76	33409995	2026-09-24 14:18:11.659978
+254	TSLA	2026-07-09	393.99	407.86	390.8631	406.55	37834988	2026-09-24 14:18:11.659978
+255	TSLA	2026-07-08	399.375	399.63	390.51	394.06	33844906	2026-09-24 14:18:11.659978
+256	TSLA	2026-07-07	416.96	419.56	401.88	402.9	38149901	2026-09-24 14:18:11.659978
+257	TSLA	2026-07-06	397.5	420	390.5	419.77	54727861	2026-09-24 14:18:11.659978
+258	TSLA	2026-07-02	428.01	432.35	389.3011	393.45	73915762	2026-09-24 14:18:11.659978
+259	TSLA	2026-07-01	421.46	432.8599	418.0901	425.3	40127902	2026-09-24 14:18:11.659978
+260	TSLA	2026-06-30	406	424.54	406	420.6	43385619	2026-09-24 14:18:11.659978
+261	TSLA	2026-06-29	381.79	413.27	379.3	411.84	57645798	2026-09-24 14:18:11.659978
+262	TSLA	2026-06-26	370.15	387.8	368.6	379.71	53434138	2026-09-24 14:18:11.659978
+263	TSLA	2026-06-25	375.27	379.117	371.221	375.12	30259987	2026-09-24 14:18:11.659978
+264	TSLA	2026-06-24	380.08	384.58	373.05	375.53	37081421	2026-09-24 14:18:11.659978
+265	TSLA	2026-06-23	392.61	392.87	379.06	381.61	50420210	2026-09-24 14:18:11.659978
+266	TSLA	2026-06-22	394.85	414.75	394.4	405.05	47819486	2026-09-24 14:18:11.659978
+267	TSLA	2026-06-18	398.095	402.52	384.7	400.49	58384713	2026-09-24 14:18:11.659978
+268	TSLA	2026-06-17	401.53	405.94	393.76	396.38	43534299	2026-09-24 14:18:11.659978
+269	TSLA	2026-06-16	404.11	412.42	400.54	404.66	40255473	2026-09-24 14:18:11.659978
+270	TSLA	2026-06-15	412.37	416	407.1	411.15	45620514	2026-09-24 14:18:11.659978
+271	TSLA	2026-06-12	399.49	406.68	386.76	406.43	63652286	2026-09-24 14:18:11.659978
+272	TSLA	2026-06-11	388.28	399.54	380.66	399.15	45324348	2026-09-24 14:18:11.659978
+273	TSLA	2026-06-10	391.54	397.09	380.15	381.59	49695583	2026-09-24 14:18:11.659978
+274	TSLA	2026-06-09	411.03	418.5	384.24	396.68	59940230	2026-09-24 14:18:11.659978
+275	TSLA	2026-06-08	396.33	412.94	394.72	408.95	50328834	2026-09-24 14:18:11.659978
+276	TSLA	2026-06-05	420.5	424.6799	388.59	391	63420177	2026-09-24 14:18:11.659978
+277	TSLA	2026-06-04	419.84	426.3499	417.16	418.45	35323259	2026-09-24 14:18:11.659978
+278	TSLA	2026-06-03	418.7	433.6	416	423.7	44500733	2026-09-24 14:18:11.659978
+279	TSLA	2026-06-02	418.22	424.42	413.65	423.74	37596045	2026-09-24 14:18:11.659978
+280	TSLA	2026-06-01	427.49	429.6	415.43	415.88	44937852	2026-09-24 14:18:11.659978
+281	TSLA	2026-05-29	439.845	441.07	428.14	435.79	45176821	2026-09-24 14:18:11.659978
+282	TSLA	2026-05-28	437.615	443.96	436.3	442.1	32434996	2026-09-24 14:18:11.659978
+283	TSLA	2026-05-27	442.89	445.6	435.52	440.36	44656505	2026-09-24 14:18:11.659978
+284	TSLA	2026-05-26	430.26	435.2	426.12	433.59	45658897	2026-09-24 14:18:11.659978
+285	TSLA	2026-05-22	422.665	431.51	420.51	426.01	46104710	2026-09-24 14:18:11.659978
+286	TSLA	2026-05-21	422.175	426.95	412.9	417.85	42636854	2026-09-24 14:18:11.659978
+287	TSLA	2026-05-20	407.6	417.46	406.39	417.26	44484579	2026-09-24 14:18:11.659978
+288	TSLA	2026-05-19	403.16	405.63	393.63	404.11	46500551	2026-09-24 14:18:11.659978
+289	TSLA	2026-05-18	419.27	421.13	405.33	409.99	52474188	2026-09-24 14:18:11.659978
+290	TSLA	2026-05-15	433.98	434.66	422	422.24	52688742	2026-09-24 14:18:11.659978
+291	TSLA	2026-05-14	446.49	451.98	441.16	443.3	46070361	2026-09-24 14:18:11.659978
+292	TSLA	2026-05-13	436.665	453.4	430.21	445.27	68283229	2026-09-24 14:18:11.659978
+293	TSLA	2026-05-12	441.41	447.8	422.26	433.45	60569303	2026-09-24 14:18:11.659978
+294	TSLA	2026-05-11	422.16	449.16	416.8	445	78376127	2026-09-24 14:18:11.659978
+295	TSLA	2026-05-08	416.475	431.2	416.39	428.35	65049970	2026-09-24 14:18:11.659978
+296	TSLA	2026-05-07	407.48	415.83	402.12	411.79	64294224	2026-09-24 14:18:11.659978
+297	TSLA	2026-05-06	386.25	401.68	384.02	398.73	53465365	2026-09-24 14:18:11.659978
+298	TSLA	2026-05-05	395.185	402.12	389	389.37	47780631	2026-09-24 14:18:11.659978
+299	TSLA	2026-05-04	390.23	394.64	384.8004	392.51	48765143	2026-09-24 14:18:11.659978
+300	TSLA	2026-05-01	382.485	397.8211	378.8	390.82	65338257	2026-09-24 14:18:11.659978
+\.
+
+
+--
+-- TOC entry 5118 (class 0 OID 16491)
+-- Dependencies: 227
+-- Data for Name: financial_metrics; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.financial_metrics (id, symbol, last_price, daily_change_pct, revenue_ttm, revenue_growth, gross_profit_margin, operating_margin, net_profit_margin, free_cash_flow, total_debt, pe_ratio, is_active, valid_from, valid_to) FROM stdin;
+1	IBM	\N	\N	69094998000	\N	40143000000	0.166	0.155	\N	\N	20.62	t	2026-09-24 13:25:25.225072	9999-12-31 23:59:59
+2	AAPL	\N	\N	466822988000	\N	227123003000	0.326	0.276	\N	\N	38.92	f	2026-09-24 14:16:39.014084	2026-09-24 14:39:00.77642
+5	AAPL	\N	\N	466822988000	\N	227123003000	0.326	0.276	\N	\N	38.92	t	2026-09-24 14:39:00.77642	9999-12-31 23:59:59
+3	MSFT	\N	\N	331839013000	\N	225465008000	0.451	0.403	\N	\N	27.78	f	2026-09-24 14:17:25.346309	2026-09-24 14:39:47.419248
+6	MSFT	\N	\N	331839013000	\N	225465008000	0.451	0.403	\N	\N	27.78	t	2026-09-24 14:39:47.419248	9999-12-31 23:59:59
+4	TSLA	\N	\N	103619002000	\N	19534000000	0.0141	0.0367	\N	\N	345.56	f	2026-09-24 14:18:11.659978	2026-09-24 14:40:33.744405
+7	TSLA	\N	\N	103619002000	\N	19534000000	0.0141	0.0367	\N	\N	345.56	t	2026-09-24 14:40:33.744405	9999-12-31 23:59:59
+\.
+
+
+--
+-- TOC entry 5116 (class 0 OID 16472)
+-- Dependencies: 225
+-- Data for Name: quarterly_financials; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.quarterly_financials (id, symbol, fiscal_date_ending, reported_currency, total_revenue, net_income, operating_income, created_at) FROM stdin;
+1	IBM	2026-06-30	USD	17162000000	2165000000	2615000000	2026-09-24 13:25:25.225072
+2	IBM	2026-03-31	USD	15917000000	1216000000	1360000000	2026-09-24 13:25:25.225072
+3	IBM	2025-12-31	USD	19687000000	5600000000	4849000000	2026-09-24 13:25:25.225072
+4	IBM	2025-09-30	USD	16331000000	1744000000	2660000000	2026-09-24 13:25:25.225072
+5	IBM	2025-06-30	USD	16977000000	2194000000	3086000000	2026-09-24 13:25:25.225072
+6	IBM	2025-03-31	USD	14541000000	1055000000	1765000000	2026-09-24 13:25:25.225072
+7	IBM	2024-12-31	USD	17553000000	2914000000	3901000000	2026-09-24 13:25:25.225072
+8	IBM	2024-09-30	USD	14967000000	-330000000	2177000000	2026-09-24 13:25:25.225072
+9	IBM	2024-06-30	USD	15769000000	1834000000	2434000000	2026-09-24 13:25:25.225072
+10	IBM	2024-03-31	USD	14461000000	1605000000	1563000000	2026-09-24 13:25:25.225072
+11	IBM	2023-12-31	USD	17380000000	3288000000	3995000000	2026-09-24 13:25:25.225072
+12	IBM	2023-09-30	USD	14752000000	1704000000	2104000000	2026-09-24 13:25:25.225072
+13	IBM	2023-06-30	USD	15475000000	1583000000	2278000000	2026-09-24 13:25:25.225072
+14	IBM	2023-03-31	USD	14252000000	927000000	1436000000	2026-09-24 13:25:25.225072
+15	IBM	2022-12-31	USD	16691000000	2711000000	3499000000	2026-09-24 13:25:25.225072
+16	IBM	2022-09-30	USD	14106000000	-3196000000	1561000000	2026-09-24 13:25:25.225072
+17	IBM	2022-06-30	USD	15535000000	1392000000	1960000000	2026-09-24 13:25:25.225072
+18	IBM	2022-03-31	USD	14197000000	733000000	1184000000	2026-09-24 13:25:25.225072
+19	IBM	2021-12-31	USD	16695000000	2332000000	2974000000	2026-09-24 13:25:25.225072
+20	IBM	2021-09-30	USD	13251000000	1130000000	1336000000	2026-09-24 13:25:25.225072
+21	IBM	2021-06-30	USD	14218000000	1325000000	1599000000	2026-09-24 13:25:25.225072
+22	IBM	2021-03-31	USD	13187000000	955000000	956000000	2026-09-24 13:25:25.225072
+23	IBM	2020-12-31	USD	20368000000	1355000000	3999000000	2026-09-24 13:25:25.225072
+24	IBM	2020-09-30	USD	17561000000	1697000000	2409000000	2026-09-24 13:25:25.225072
+25	IBM	2020-06-30	USD	18123000000	1361000000	2210000000	2026-09-24 13:25:25.225072
+26	IBM	2020-03-31	USD	17570000000	1175000000	1187000000	2026-09-24 13:25:25.225072
+27	IBM	2019-12-31	USD	21777000000	3670000000	4266000000	2026-09-24 13:25:25.225072
+28	IBM	2019-09-30	USD	18027000000	1672000000	1924000000	2026-09-24 13:25:25.225072
+29	IBM	2019-06-30	USD	19161000000	2498000000	2369000000	2026-09-24 13:25:25.225072
+30	IBM	2019-03-31	USD	18181000000	1591000000	2021000000	2026-09-24 13:25:25.225072
+31	IBM	2018-12-31	USD	21760000000	1951000000	4824000000	2026-09-24 13:25:25.225072
+32	IBM	2018-09-30	USD	18756000000	2694000000	3467000000	2026-09-24 13:25:25.225072
+33	IBM	2018-06-30	USD	20003000000	2403000000	3268000000	2026-09-24 13:25:25.225072
+34	IBM	2018-03-31	USD	19071000000	1679000000	1727000000	2026-09-24 13:25:25.225072
+35	IBM	2017-12-31	USD	22543000000	-1055000000	4652000000	2026-09-24 13:25:25.225072
+36	IBM	2017-09-30	USD	19153000000	2726000000	3399000000	2026-09-24 13:25:25.225072
+37	IBM	2017-06-30	USD	19289000000	2331000000	2881000000	2026-09-24 13:25:25.225072
+38	IBM	2017-03-31	USD	18155000000	1750000000	1894000000	2026-09-24 13:25:25.225072
+39	IBM	2016-12-31	USD	21771000000	4501000000	5004000000	2026-09-24 13:25:25.225072
+40	IBM	2016-09-30	USD	19227000000	2853000000	3380000000	2026-09-24 13:25:25.225072
+41	IBM	2016-06-30	USD	20239000000	2505000000	3279000000	2026-09-24 13:25:25.225072
+42	IBM	2016-03-31	USD	18684000000	2013000000	1530000000	2026-09-24 13:25:25.225072
+43	IBM	2015-12-31	USD	22060000000	4462000000	5127000000	2026-09-24 13:25:25.225072
+44	IBM	2015-09-30	USD	19280000000	2950000000	3631000000	2026-09-24 13:25:25.225072
+45	IBM	2015-06-30	USD	20814000000	3449000000	4112000000	2026-09-24 13:25:25.225072
+46	IBM	2015-03-31	USD	19590000000	2327000000	3048000000	2026-09-24 13:25:25.225072
+47	IBM	2014-12-31	USD	24113000000	5483000000	5817000000	2026-09-24 13:25:25.225072
+48	IBM	2014-09-30	USD	22397000000	18000000	4485000000	2026-09-24 13:25:25.225072
+49	IBM	2014-06-30	USD	24047000000	4136000000	5348000000	2026-09-24 13:25:25.225072
+50	IBM	2014-03-31	USD	22236000000	2384000000	3215000000	2026-09-24 13:25:25.225072
+51	IBM	2013-12-31	USD	27699000000	6184000000	7042000000	2026-09-24 13:25:25.225072
+52	IBM	2013-09-30	USD	23338000000	4041000000	5034000000	2026-09-24 13:25:25.225072
+53	IBM	2013-06-30	USD	24924000000	3226000000	4175000000	2026-09-24 13:25:25.225072
+54	IBM	2013-03-31	USD	23408000000	3032000000	3662000000	2026-09-24 13:25:25.225072
+55	IBM	2012-12-31	USD	29304000000	5833000000	8790000000	2026-09-24 13:25:25.225072
+56	IBM	2012-09-30	USD	24747000000	3824000000	4608000000	2026-09-24 13:25:25.225072
+57	IBM	2012-06-30	USD	25782000000	3881000000	5149000000	2026-09-24 13:25:25.225072
+58	IBM	2012-03-31	USD	24673000000	3066000000	3894000000	2026-09-24 13:25:25.225072
+59	IBM	2011-12-31	USD	29486000000	5490000000	7091000000	2026-09-24 13:25:25.225072
+60	IBM	2011-09-30	USD	26157000000	3839000000	4966000000	2026-09-24 13:25:25.225072
+61	IBM	2011-06-30	USD	26667000000	3664000000	4785000000	2026-09-24 13:25:25.225072
+62	IBM	2011-03-31	USD	24607000000	2863000000	3433000000	2026-09-24 13:25:25.225072
+63	IBM	2010-12-31	USD	29018000000	5257000000	6687000000	2026-09-24 13:25:25.225072
+64	IBM	2010-09-30	USD	24271000000	3589000000	4389000000	2026-09-24 13:25:25.225072
+65	IBM	2010-06-30	USD	23723000000	3386000000	4271000000	2026-09-24 13:25:25.225072
+66	IBM	2010-03-31	USD	22858000000	2601000000	2794000000	2026-09-24 13:25:25.225072
+67	IBM	2009-12-31	USD	27230000000	4813000000	6027000000	2026-09-24 13:25:25.225072
+68	IBM	2009-09-30	USD	23566000000	3214000000	4144000000	2026-09-24 13:25:25.225072
+69	IBM	2009-06-30	USD	23250000000	3103000000	4056000000	2026-09-24 13:25:25.225072
+70	IBM	2009-03-31	USD	21711000000	2295000000	2688000000	2026-09-24 13:25:25.225072
+71	IBM	2008-12-31	USD	27007000000	4427000000	5575000000	2026-09-24 13:25:25.225072
+72	IBM	2008-09-30	USD	25302000000	2824000000	3864000000	2026-09-24 13:25:25.225072
+73	IBM	2008-06-30	USD	26820000000	2765000000	3649000000	2026-09-24 13:25:25.225072
+74	IBM	2008-03-31	USD	24502000000	2319000000	2977000000	2026-09-24 13:25:25.225072
+75	IBM	2007-12-31	USD	30718000000	3952000000	7220000000	2026-09-24 13:25:25.225072
+76	IBM	2007-09-30	USD	24119000000	2361000000	3108000000	2026-09-24 13:25:25.225072
+77	IBM	2007-06-30	USD	23170000000	2260000000	2171000000	2026-09-24 13:25:25.225072
+78	IBM	2007-03-31	USD	21408000000	1844000000	1647000000	2026-09-24 13:25:25.225072
+79	IBM	2006-12-31	USD	26258000000	3540000000	4495000000	2026-09-24 13:25:25.225072
+80	IBM	2006-09-30	USD	22026000000	2222000000	2236000000	2026-09-24 13:25:25.225072
+81	IBM	2006-06-30	USD	21310000000	2022000000	1996000000	2026-09-24 13:25:25.225072
+82	AAPL	2026-06-30	USD	109417000000	29789000000	35695000000	2026-09-24 14:16:39.014084
+83	AAPL	2026-03-31	USD	111184000000	29578000000	35885000000	2026-09-24 14:16:39.014084
+84	AAPL	2025-12-31	USD	143756000000	42097000000	50852000000	2026-09-24 14:16:39.014084
+85	AAPL	2025-09-30	USD	102466000000	27466000000	32427000000	2026-09-24 14:16:39.014084
+86	AAPL	2025-06-30	USD	94036000000	23434000000	28202000000	2026-09-24 14:16:39.014084
+87	AAPL	2025-03-31	USD	95359000000	24780000000	29589000000	2026-09-24 14:16:39.014084
+88	AAPL	2024-12-31	USD	124300000000	36330000000	42832000000	2026-09-24 14:16:39.014084
+89	AAPL	2024-09-30	USD	94930000000	14736000000	29591000000	2026-09-24 14:16:39.014084
+90	AAPL	2024-06-30	USD	85777000000	21448000000	25352000000	2026-09-24 14:16:39.014084
+91	AAPL	2024-03-31	USD	90753000000	23636000000	27900000000	2026-09-24 14:16:39.014084
+92	AAPL	2023-12-31	USD	119575000000	33916000000	40373000000	2026-09-24 14:16:39.014084
+93	AAPL	2023-09-30	USD	89498000000	22956000000	26969000000	2026-09-24 14:16:39.014084
+94	AAPL	2023-06-30	USD	81797000000	19881000000	22998000000	2026-09-24 14:16:39.014084
+95	AAPL	2023-03-31	USD	94836000000	24160000000	28318000000	2026-09-24 14:16:39.014084
+96	AAPL	2022-12-31	USD	117154000000	29998000000	36016000000	2026-09-24 14:16:39.014084
+97	AAPL	2022-09-30	USD	90146000000	20721000000	24894000000	2026-09-24 14:16:39.014084
+98	AAPL	2022-06-30	USD	82959000000	19442000000	23076000000	2026-09-24 14:16:39.014084
+99	AAPL	2022-03-31	USD	97278000000	25010000000	29979000000	2026-09-24 14:16:39.014084
+100	AAPL	2021-12-31	USD	123945000000	34630000000	41488000000	2026-09-24 14:16:39.014084
+101	AAPL	2021-09-30	USD	83360000000	20551000000	23786000000	2026-09-24 14:16:39.014084
+102	AAPL	2021-06-30	USD	81434000000	21744000000	24126000000	2026-09-24 14:16:39.014084
+103	AAPL	2021-03-31	USD	89584000000	23630000000	27503000000	2026-09-24 14:16:39.014084
+104	AAPL	2020-12-31	USD	111439000000	28755000000	33534000000	2026-09-24 14:16:39.014084
+105	AAPL	2020-09-30	USD	64698000000	12673000000	14775000000	2026-09-24 14:16:39.014084
+106	AAPL	2020-06-30	USD	59685000000	11253000000	13091000000	2026-09-24 14:16:39.014084
+107	AAPL	2020-03-31	USD	58313000000	11249000000	12853000000	2026-09-24 14:16:39.014084
+108	AAPL	2019-12-31	USD	91819000000	22236000000	25569000000	2026-09-24 14:16:39.014084
+109	AAPL	2019-09-30	USD	64040000000	13686000000	15625000000	2026-09-24 14:16:39.014084
+110	AAPL	2019-06-30	USD	53809000000	10044000000	11544000000	2026-09-24 14:16:39.014084
+111	AAPL	2019-03-31	USD	58015000000	11561000000	13415000000	2026-09-24 14:16:39.014084
+112	AAPL	2018-12-31	USD	84310000000	19965000000	23346000000	2026-09-24 14:16:39.014084
+113	AAPL	2018-09-30	USD	62900000000	14125000000	16118000000	2026-09-24 14:16:39.014084
+114	AAPL	2018-06-30	USD	53265000000	11519000000	12612000000	2026-09-24 14:16:39.014084
+115	AAPL	2018-03-31	USD	61137000000	13822000000	15894000000	2026-09-24 14:16:39.014084
+116	AAPL	2017-12-31	USD	88293000000	20065000000	26274000000	2026-09-24 14:16:39.014084
+117	AAPL	2017-09-30	USD	52579000000	10714000000	13120000000	2026-09-24 14:16:39.014084
+118	AAPL	2017-06-30	USD	45408000000	8717000000	10768000000	2026-09-24 14:16:39.014084
+119	AAPL	2017-03-31	USD	52896000000	11029000000	14097000000	2026-09-24 14:16:39.014084
+120	AAPL	2016-12-31	USD	78351000000	17891000000	23359000000	2026-09-24 14:16:39.014084
+121	AAPL	2016-09-30	USD	46852000000	9014000000	11761000000	2026-09-24 14:16:39.014084
+122	AAPL	2016-06-30	USD	42358000000	7796000000	10105000000	2026-09-24 14:16:39.014084
+123	AAPL	2016-03-31	USD	50557000000	10516000000	13987000000	2026-09-24 14:16:39.014084
+124	AAPL	2015-12-31	USD	75872000000	18361000000	24171000000	2026-09-24 14:16:39.014084
+125	AAPL	2015-09-30	USD	51501000000	11124000000	14623000000	2026-09-24 14:16:39.014084
+126	AAPL	2015-06-30	USD	49605000000	10677000000	14083000000	2026-09-24 14:16:39.014084
+127	AAPL	2015-03-31	USD	58010000000	13569000000	18278000000	2026-09-24 14:16:39.014084
+128	AAPL	2014-12-31	USD	74599000000	18024000000	24246000000	2026-09-24 14:16:39.014084
+129	AAPL	2014-09-30	USD	42123000000	8467000000	11165000000	2026-09-24 14:16:39.014084
+130	AAPL	2014-06-30	USD	37432000000	7748000000	10282000000	2026-09-24 14:16:39.014084
+131	AAPL	2014-03-31	USD	45646000000	10223000000	13593000000	2026-09-24 14:16:39.014084
+132	AAPL	2013-12-31	USD	57594000000	13072000000	17463000000	2026-09-24 14:16:39.014084
+133	AAPL	2013-09-30	USD	37472000000	7512000000	10030000000	2026-09-24 14:16:39.014084
+134	AAPL	2013-06-30	USD	35323000000	6900000000	9201000000	2026-09-24 14:16:39.014084
+135	AAPL	2013-03-31	USD	43603000000	9547000000	12558000000	2026-09-24 14:16:39.014084
+136	AAPL	2012-12-31	USD	54512000000	13078000000	17210000000	2026-09-24 14:16:39.014084
+137	AAPL	2012-09-30	USD	37472000000	7512000000	10030000000	2026-09-24 14:16:39.014084
+138	AAPL	2012-06-30	USD	35023000000	8824000000	11573000000	2026-09-24 14:16:39.014084
+139	AAPL	2012-03-31	USD	39186000000	11622000000	15384000000	2026-09-24 14:16:39.014084
+140	AAPL	2011-12-31	USD	46333000000	13064000000	17340000000	2026-09-24 14:16:39.014084
+141	AAPL	2011-09-30	USD	28270000000	6623000000	8710000000	2026-09-24 14:16:39.014084
+142	AAPL	2011-06-30	USD	28571000000	7308000000	9379000000	2026-09-24 14:16:39.014084
+143	AAPL	2011-03-31	USD	24667000000	5987000000	7874000000	2026-09-24 14:16:39.014084
+144	AAPL	2010-12-31	USD	26741000000	6004000000	7827000000	2026-09-24 14:16:39.014084
+145	AAPL	2010-09-30	USD	20343000000	4308000000	5447000000	2026-09-24 14:16:39.014084
+146	AAPL	2010-06-30	USD	15700000000	3253000000	4234000000	2026-09-24 14:16:39.014084
+147	AAPL	2010-03-31	USD	13499000000	3074000000	3979000000	2026-09-24 14:16:39.014084
+148	AAPL	2009-12-31	USD	15683000000	3378000000	4725000000	2026-09-24 14:16:39.014084
+149	AAPL	2009-09-30	USD	9870000000	1665000000	2193000000	2026-09-24 14:16:39.014084
+150	AAPL	2009-06-30	USD	9734000000	1828000000	2632000000	2026-09-24 14:16:39.014084
+151	AAPL	2009-03-31	USD	9084000000	1620000000	2323000000	2026-09-24 14:16:39.014084
+152	AAPL	2008-12-31	USD	11880000000	2255000000	3101000000	2026-09-24 14:16:39.014084
+153	AAPL	2008-09-30	USD	7895000000	1136000000	1442000000	2026-09-24 14:16:39.014084
+154	AAPL	2008-06-30	USD	7464000000	1072000000	1392000000	2026-09-24 14:16:39.014084
+155	AAPL	2008-03-31	USD	7512000000	1045000000	1315000000	2026-09-24 14:16:39.014084
+156	AAPL	2007-12-31	USD	9608000000	1581000000	2126000000	2026-09-24 14:16:39.014084
+157	AAPL	2007-09-30	USD	6217000000	904000000	1060000000	2026-09-24 14:16:39.014084
+158	AAPL	2007-06-30	USD	5410000000	818000000	1041000000	2026-09-24 14:16:39.014084
+159	AAPL	2007-03-31	USD	5264000000	770000000	986000000	2026-09-24 14:16:39.014084
+160	AAPL	2006-12-31	USD	7115000000	1004000000	1322000000	2026-09-24 14:16:39.014084
+161	AAPL	2006-09-30	USD	4370000000	542000000	608000000	2026-09-24 14:16:39.014084
+162	AAPL	2006-06-30	USD	4370000000	472000000	566000000	2026-09-24 14:16:39.014084
+163	MSFT	2026-06-30	USD	90007000000	35766000000	40603000000	2026-09-24 14:17:25.346309
+164	MSFT	2026-03-31	USD	82886000000	31778000000	38398000000	2026-09-24 14:17:25.346309
+165	MSFT	2025-12-31	USD	81273000000	38458000000	38275000000	2026-09-24 14:17:25.346309
+166	MSFT	2025-09-30	USD	77673000000	27747000000	37961000000	2026-09-24 14:17:25.346309
+167	MSFT	2025-06-30	USD	76441000000	27233000000	34323000000	2026-09-24 14:17:25.346309
+168	MSFT	2025-03-31	USD	70066000000	25824000000	32000000000	2026-09-24 14:17:25.346309
+169	MSFT	2024-12-31	USD	69632000000	24108000000	31653000000	2026-09-24 14:17:25.346309
+170	MSFT	2024-09-30	USD	65585000000	24667000000	30552000000	2026-09-24 14:17:25.346309
+171	MSFT	2024-06-30	USD	64727000000	22036000000	27925000000	2026-09-24 14:17:25.346309
+172	MSFT	2024-03-31	USD	61858000000	21939000000	27581000000	2026-09-24 14:17:25.346309
+173	MSFT	2023-12-31	USD	62020000000	21870000000	27032000000	2026-09-24 14:17:25.346309
+174	MSFT	2023-09-30	USD	56517000000	22291000000	26895000000	2026-09-24 14:17:25.346309
+175	MSFT	2023-06-30	USD	56189000000	20081000000	24254000000	2026-09-24 14:17:25.346309
+176	MSFT	2023-03-31	USD	52857000000	18299000000	22352000000	2026-09-24 14:17:25.346309
+177	MSFT	2022-12-31	USD	52747000000	16425000000	20399000000	2026-09-24 14:17:25.346309
+178	MSFT	2022-09-30	USD	50122000000	17556000000	21518000000	2026-09-24 14:17:25.346309
+179	MSFT	2022-06-30	USD	51865000000	16740000000	20534000000	2026-09-24 14:17:25.346309
+180	MSFT	2022-03-31	USD	49360000000	16728000000	20364000000	2026-09-24 14:17:25.346309
+181	MSFT	2021-12-31	USD	51728000000	18765000000	22247000000	2026-09-24 14:17:25.346309
+182	MSFT	2021-09-30	USD	45317000000	20505000000	20238000000	2026-09-24 14:17:25.346309
+183	MSFT	2021-06-30	USD	46152000000	16458000000	19095000000	2026-09-24 14:17:25.346309
+184	MSFT	2021-03-31	USD	41706000000	15457000000	17048000000	2026-09-24 14:17:25.346309
+185	MSFT	2020-12-31	USD	43076000000	15463000000	17897000000	2026-09-24 14:17:25.346309
+186	MSFT	2020-09-30	USD	37154000000	13893000000	15876000000	2026-09-24 14:17:25.346309
+187	MSFT	2020-06-30	USD	38033000000	11202000000	13407000000	2026-09-24 14:17:25.346309
+188	MSFT	2020-03-31	USD	35021000000	10752000000	12975000000	2026-09-24 14:17:25.346309
+189	MSFT	2019-12-31	USD	36906000000	11649000000	13891000000	2026-09-24 14:17:25.346309
+190	MSFT	2019-09-30	USD	33055000000	10678000000	12686000000	2026-09-24 14:17:25.346309
+191	MSFT	2019-06-30	USD	33717000000	13187000000	12405000000	2026-09-24 14:17:25.346309
+192	MSFT	2019-03-31	USD	30571000000	8809000000	10341000000	2026-09-24 14:17:25.346309
+193	MSFT	2018-12-31	USD	32471000000	8420000000	10258000000	2026-09-24 14:17:25.346309
+194	MSFT	2018-09-30	USD	29084000000	8824000000	9955000000	2026-09-24 14:17:25.346309
+195	MSFT	2018-06-30	USD	30085000000	8873000000	10379000000	2026-09-24 14:17:25.346309
+196	MSFT	2018-03-31	USD	26819000000	7424000000	8292000000	2026-09-24 14:17:25.346309
+197	MSFT	2017-12-31	USD	28918000000	-6302000000	8679000000	2026-09-24 14:17:25.346309
+198	MSFT	2017-09-30	USD	24538000000	6576000000	7708000000	2026-09-24 14:17:25.346309
+199	MSFT	2017-06-30	USD	25605000000	8069000000	7682000000	2026-09-24 14:17:25.346309
+200	MSFT	2017-03-31	USD	23212000000	5486000000	6723000000	2026-09-24 14:17:25.346309
+201	MSFT	2016-12-31	USD	25826000000	6267000000	7905000000	2026-09-24 14:17:25.346309
+202	MSFT	2016-09-30	USD	21928000000	5667000000	6715000000	2026-09-24 14:17:25.346309
+203	MSFT	2016-06-30	USD	20614000000	3122000000	3080000000	2026-09-24 14:17:25.346309
+204	MSFT	2016-03-31	USD	20531000000	3756000000	5283000000	2026-09-24 14:17:25.346309
+205	MSFT	2015-12-31	USD	23796000000	5018000000	6026000000	2026-09-24 14:17:25.346309
+206	MSFT	2015-09-30	USD	20379000000	4902000000	5793000000	2026-09-24 14:17:25.346309
+207	MSFT	2015-06-30	USD	22180000000	-3195000000	-2053000000	2026-09-24 14:17:25.346309
+208	MSFT	2015-03-31	USD	21729000000	4985000000	6594000000	2026-09-24 14:17:25.346309
+209	MSFT	2014-12-31	USD	26470000000	5863000000	7776000000	2026-09-24 14:17:25.346309
+210	MSFT	2014-09-30	USD	23201000000	4540000000	5844000000	2026-09-24 14:17:25.346309
+211	MSFT	2014-06-30	USD	23382000000	4612000000	6482000000	2026-09-24 14:17:25.346309
+212	MSFT	2014-03-31	USD	20403000000	5660000000	6974000000	2026-09-24 14:17:25.346309
+213	MSFT	2013-12-31	USD	24519000000	6558000000	7969000000	2026-09-24 14:17:25.346309
+214	MSFT	2013-09-30	USD	18529000000	5244000000	6334000000	2026-09-24 14:17:25.346309
+215	MSFT	2013-06-30	USD	19896000000	4965000000	6073000000	2026-09-24 14:17:25.346309
+216	MSFT	2013-03-31	USD	20489000000	6055000000	7612000000	2026-09-24 14:17:25.346309
+217	MSFT	2012-12-31	USD	21456000000	6377000000	7771000000	2026-09-24 14:17:25.346309
+218	MSFT	2012-09-30	USD	16008000000	4466000000	5308000000	2026-09-24 14:17:25.346309
+219	MSFT	2012-06-30	USD	18059000000	-492000000	192000000	2026-09-24 14:17:25.346309
+220	MSFT	2012-03-31	USD	17407000000	5108000000	6374000000	2026-09-24 14:17:25.346309
+221	MSFT	2011-12-31	USD	20885000000	6624000000	7994000000	2026-09-24 14:17:25.346309
+222	MSFT	2011-09-30	USD	17372000000	5738000000	7203000000	2026-09-24 14:17:25.346309
+223	MSFT	2011-06-30	USD	17367000000	5874000000	6171000000	2026-09-24 14:17:25.346309
+224	MSFT	2011-03-31	USD	16428000000	5232000000	5709000000	2026-09-24 14:17:25.346309
+225	MSFT	2010-12-31	USD	19953000000	6634000000	8165000000	2026-09-24 14:17:25.346309
+226	MSFT	2010-09-30	USD	16195000000	5410000000	7116000000	2026-09-24 14:17:25.346309
+227	MSFT	2010-06-30	USD	16039000000	4518000000	5930000000	2026-09-24 14:17:25.346309
+228	MSFT	2010-03-31	USD	14503000000	4006000000	5173000000	2026-09-24 14:17:25.346309
+229	MSFT	2009-12-31	USD	19022000000	6662000000	8513000000	2026-09-24 14:17:25.346309
+230	MSFT	2009-09-30	USD	12920000000	3574000000	4482000000	2026-09-24 14:17:25.346309
+231	MSFT	2009-06-30	USD	13099000000	3045000000	3987000000	2026-09-24 14:17:25.346309
+232	MSFT	2009-03-31	USD	13648000000	2977000000	4438000000	2026-09-24 14:17:25.346309
+233	MSFT	2008-12-31	USD	16629000000	4174000000	5939000000	2026-09-24 14:17:25.346309
+234	MSFT	2008-09-30	USD	15061000000	4373000000	5999000000	2026-09-24 14:17:25.346309
+235	MSFT	2008-06-30	USD	15837000000	4297000000	5684000000	2026-09-24 14:17:25.346309
+236	MSFT	2008-03-31	USD	14454000000	4388000000	4409000000	2026-09-24 14:17:25.346309
+237	MSFT	2007-12-31	USD	16367000000	4707000000	6481000000	2026-09-24 14:17:25.346309
+238	MSFT	2007-09-30	USD	13762000000	4289000000	5918000000	2026-09-24 14:17:25.346309
+239	MSFT	2007-06-30	USD	13371000000	3035000000	3989000000	2026-09-24 14:17:25.346309
+240	MSFT	2007-03-31	USD	14398000000	4926000000	6589000000	2026-09-24 14:17:25.346309
+241	MSFT	2006-12-31	USD	12542000000	2626000000	3472000000	2026-09-24 14:17:25.346309
+242	MSFT	2006-09-30	USD	10811000000	3478000000	4474000000	2026-09-24 14:17:25.346309
+243	MSFT	2006-06-30	USD	11804000000	2828000000	3881000000	2026-09-24 14:17:25.346309
+244	TSLA	2026-06-30	USD	28236000000	1114000000	398000000	2026-09-24 14:18:11.659978
+245	TSLA	2026-03-31	USD	22387000000	491000000	941000000	2026-09-24 14:18:11.659978
+246	TSLA	2025-12-31	USD	24901000000	840000000	1409000000	2026-09-24 14:18:11.659978
+247	TSLA	2025-09-30	USD	28095000000	1373000000	1624000000	2026-09-24 14:18:11.659978
+248	TSLA	2025-06-30	USD	22496000000	1172000000	923000000	2026-09-24 14:18:11.659978
+249	TSLA	2025-03-31	USD	19335000000	409000000	399000000	2026-09-24 14:18:11.659978
+250	TSLA	2024-12-31	USD	25707000000	2314000000	1583000000	2026-09-24 14:18:11.659978
+251	TSLA	2024-09-30	USD	25182000000	2167000000	2717000000	2026-09-24 14:18:11.659978
+252	TSLA	2024-06-30	USD	25500000000	1400000000	1605000000	2026-09-24 14:18:11.659978
+253	TSLA	2024-03-31	USD	21301000000	1390000000	1171000000	2026-09-24 14:18:11.659978
+254	TSLA	2023-12-31	USD	25167000000	7930000000	2064000000	2026-09-24 14:18:11.659978
+255	TSLA	2023-09-30	USD	23350000000	1853000000	1764000000	2026-09-24 14:18:11.659978
+256	TSLA	2023-06-30	USD	24927000000	2703000000	2399000000	2026-09-24 14:18:11.659978
+257	TSLA	2023-03-31	USD	23329000000	2513000000	2664000000	2026-09-24 14:18:11.659978
+258	TSLA	2022-12-31	USD	24318000000	3687000000	3901000000	2026-09-24 14:18:11.659978
+259	TSLA	2022-09-30	USD	21454000000	3292000000	3688000000	2026-09-24 14:18:11.659978
+260	TSLA	2022-06-30	USD	16934000000	2259000000	2464000000	2026-09-24 14:18:11.659978
+261	TSLA	2022-03-31	USD	18756000000	3280000000	3603000000	2026-09-24 14:18:11.659978
+262	TSLA	2021-12-31	USD	17719000000	2343000000	2567000000	2026-09-24 14:18:11.659978
+263	TSLA	2021-09-30	USD	13757000000	1618000000	2004000000	2026-09-24 14:18:11.659978
+264	TSLA	2021-06-30	USD	11958000000	1142000000	1312000000	2026-09-24 14:18:11.659978
+265	TSLA	2021-03-31	USD	10389000000	438000000	594000000	2026-09-24 14:18:11.659978
+266	TSLA	2020-12-31	USD	10744000000	239000000	575000000	2026-09-24 14:18:11.659978
+267	TSLA	2020-09-30	USD	8771000000	331000000	809000000	2026-09-24 14:18:11.659978
+268	TSLA	2020-06-30	USD	6036000000	104000000	327000000	2026-09-24 14:18:11.659978
+269	TSLA	2020-03-31	USD	5985000000	68000000	239000000	2026-09-24 14:18:11.659978
+270	TSLA	2019-12-31	USD	7384000000	105000000	359000000	2026-09-24 14:18:11.659978
+271	TSLA	2019-09-30	USD	6303000000	143000000	361000000	2026-09-24 14:18:11.659978
+272	TSLA	2019-06-30	USD	6349676000	-389262000	-80507000	2026-09-24 14:18:11.659978
+273	TSLA	2019-03-31	USD	4541464000	-667645000	-443848000	2026-09-24 14:18:11.659978
+274	TSLA	2018-12-31	USD	7225873000	210078000	251776000	2026-09-24 14:18:11.659978
+275	TSLA	2018-09-30	USD	6824413000	311516000	416757000	2026-09-24 14:18:11.659978
+276	TSLA	2018-06-30	USD	4002231000	-742706000	-461983000	2026-09-24 14:18:11.659978
+277	TSLA	2018-03-31	USD	3408751000	-709551000	-596974000	2026-09-24 14:18:11.659978
+278	TSLA	2017-12-31	USD	3288249000	-770807000	-598141000	2026-09-24 14:18:11.659978
+279	TSLA	2017-09-30	USD	2984675000	-619376000	-535480000	2026-09-24 14:18:11.659978
+280	TSLA	2017-06-30	USD	2789557000	-336397000	-277339000	2026-09-24 14:18:11.659978
+281	TSLA	2017-03-31	USD	2696270000	-330277000	-272557000	2026-09-24 14:18:11.659978
+282	TSLA	2016-12-31	USD	2284631000	-219469000	-143295000	2026-09-24 14:18:11.659978
+283	TSLA	2016-09-30	USD	2298436000	21878000	85622000	2026-09-24 14:18:11.659978
+284	TSLA	2016-06-30	USD	1270017000	-293188000	-238040000	2026-09-24 14:18:11.659978
+285	TSLA	2016-03-31	USD	1147048000	-282267000	-248224000	2026-09-24 14:18:11.659978
+286	TSLA	2015-12-31	USD	1214380000	-320397000	-260333000	2026-09-24 14:18:11.659978
+287	TSLA	2015-09-30	USD	936789000	-229858000	-183662000	2026-09-24 14:18:11.659978
+288	TSLA	2015-06-30	USD	954976000	-184227000	-170188000	2026-09-24 14:18:11.659978
+289	TSLA	2015-03-31	USD	939880000	-154181000	-102446000	2026-09-24 14:18:11.659978
+290	TSLA	2014-12-31	USD	956661000	-107629000	-74838000	2026-09-24 14:18:11.659978
+291	TSLA	2014-09-30	USD	851804000	-74708000	-41919000	2026-09-24 14:18:11.659978
+292	TSLA	2014-06-30	USD	769349000	-61900000	-29512000	2026-09-24 14:18:11.659978
+293	TSLA	2014-03-31	USD	620542000	-49800000	-37108000	2026-09-24 14:18:11.659978
+294	TSLA	2013-12-31	USD	615219000	-16264000	-8677000	2026-09-24 14:18:11.659978
+295	TSLA	2013-09-30	USD	431346000	-38496000	-30554000	2026-09-24 14:18:11.659978
+296	TSLA	2013-06-30	USD	405139000	-30502000	-10085000	2026-09-24 14:18:11.659978
+297	TSLA	2013-03-31	USD	561792000	11248000	11517000	2026-09-24 14:18:11.659978
+298	TSLA	2012-12-31	USD	306332000	-89931000	-90883000	2026-09-24 14:18:11.659978
+299	TSLA	2012-09-30	USD	50104000	-110804000	-108460000	2026-09-24 14:18:11.659978
+300	TSLA	2012-06-30	USD	26653000	-105603000	-106175000	2026-09-24 14:18:11.659978
+301	TSLA	2012-03-31	USD	30167000	-89873000	-88763000	2026-09-24 14:18:11.659978
+302	TSLA	2011-12-31	USD	39375000	-81489000	-80927000	2026-09-24 14:18:11.659978
+303	TSLA	2011-09-30	USD	57666000	-65078000	-64477000	2026-09-24 14:18:11.659978
+304	TSLA	2011-06-30	USD	58171000	-58903000	-58739000	2026-09-24 14:18:11.659978
+305	TSLA	2011-03-31	USD	49030000	-48941000	-47346000	2026-09-24 14:18:11.659978
+306	TSLA	2010-12-31	USD	36286000	-51358000	-51645000	2026-09-24 14:18:11.659978
+307	TSLA	2010-09-30	USD	31241000	-34935000	-37834000	2026-09-24 14:18:11.659978
+308	TSLA	2010-06-30	USD	28405000	-38517000	-31362000	2026-09-24 14:18:11.659978
+309	TSLA	2010-03-31	USD	20812000	-29519000	-25998000	2026-09-24 14:18:11.659978
+310	TSLA	2009-12-31	USD	18585000	-24242000	-22925000	2026-09-24 14:18:11.659978
+311	TSLA	2009-09-30	USD	45527000	-4615000	-4291000	2026-09-24 14:18:11.659978
+312	TSLA	2009-06-30	USD	26945000	-10867000	-8087000	2026-09-24 14:18:11.659978
+313	TSLA	2009-03-31	USD	20886000	-16016000	-16594000	2026-09-24 14:18:11.659978
+314	TSLA	2008-12-31	USD	14162000	-25498000	-23224000	2026-09-24 14:18:11.659978
+315	TSLA	2008-09-30	USD	14162000	-25498000	-23224000	2026-09-24 14:18:11.659978
+316	TSLA	2008-03-31	USD	3685500	-20695500	-19626000	2026-09-24 14:18:11.659978
+317	TSLA	2007-12-31	USD	3685500	-20695500	-19626000	2026-09-24 14:18:11.659978
+318	TSLA	2007-03-31	USD	18250	-19539250	-19983250	2026-09-24 14:18:11.659978
+\.
+
+
+--
+-- TOC entry 5120 (class 0 OID 24578)
+-- Dependencies: 230
+-- Data for Name: stockprices_ohlc; Type: TABLE DATA; Schema: stg; Owner: postgres
+--
+
+COPY stg.stockprices_ohlc (stagingid, symbol, tradedate, openprice, highprice, lowprice, closeprice, volume, loaddate) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5142 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: dimstock_stocksurrogatekey_seq; Type: SEQUENCE SET; Schema: dwh; Owner: postgres
+--
+
+SELECT pg_catalog.setval('dwh.dimstock_stocksurrogatekey_seq', 5, true);
+
+
+--
+-- TOC entry 5143 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: factfinancials_financialid_seq; Type: SEQUENCE SET; Schema: dwh; Owner: postgres
+--
+
+SELECT pg_catalog.setval('dwh.factfinancials_financialid_seq', 1, false);
+
+
+--
+-- TOC entry 5144 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: factstockprices_factid_seq; Type: SEQUENCE SET; Schema: dwh; Owner: postgres
+--
+
+SELECT pg_catalog.setval('dwh.factstockprices_factid_seq', 700, true);
+
+
+--
+-- TOC entry 5145 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: synclog_syncid_seq; Type: SEQUENCE SET; Schema: dwh; Owner: postgres
+--
+
+SELECT pg_catalog.setval('dwh.synclog_syncid_seq', 700, true);
+
+
+--
+-- TOC entry 5146 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: daily_stock_prices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.daily_stock_prices_id_seq', 600, true);
+
+
+--
+-- TOC entry 5147 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: financial_metrics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.financial_metrics_id_seq', 7, true);
+
+
+--
+-- TOC entry 5148 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: quarterly_financials_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.quarterly_financials_id_seq', 474, true);
+
+
+--
+-- TOC entry 5149 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: stockprices_ohlc_stagingid_seq; Type: SEQUENCE SET; Schema: stg; Owner: postgres
+--
+
+SELECT pg_catalog.setval('stg.stockprices_ohlc_stagingid_seq', 700, true);
+
+
+--
+-- TOC entry 4944 (class 2606 OID 24600)
+-- Name: dimstock dimstock_pkey; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.dimstock
+    ADD CONSTRAINT dimstock_pkey PRIMARY KEY (stocksurrogatekey);
+
+
+--
+-- TOC entry 4950 (class 2606 OID 24648)
+-- Name: factfinancials factfinancials_pkey; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factfinancials
+    ADD CONSTRAINT factfinancials_pkey PRIMARY KEY (financialid);
+
+
+--
+-- TOC entry 4946 (class 2606 OID 24611)
+-- Name: factstockprices factstockprices_pkey; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factstockprices
+    ADD CONSTRAINT factstockprices_pkey PRIMARY KEY (factid);
+
+
+--
+-- TOC entry 4954 (class 2606 OID 24674)
+-- Name: synclog synclog_pkey; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.synclog
+    ADD CONSTRAINT synclog_pkey PRIMARY KEY (syncid);
+
+
+--
+-- TOC entry 4952 (class 2606 OID 24650)
+-- Name: factfinancials uq_fact_financials; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factfinancials
+    ADD CONSTRAINT uq_fact_financials UNIQUE (stocksurrogatekey, periodname);
+
+
+--
+-- TOC entry 4948 (class 2606 OID 24630)
+-- Name: factstockprices uq_fact_stock_date; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factstockprices
+    ADD CONSTRAINT uq_fact_stock_date UNIQUE (stocksurrogatekey, tradedate);
+
+
+--
+-- TOC entry 4956 (class 2606 OID 24676)
+-- Name: synclog uq_sync_audit; Type: CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.synclog
+    ADD CONSTRAINT uq_sync_audit UNIQUE (symbol, synctype, syncdate);
+
+
+--
+-- TOC entry 4930 (class 2606 OID 16396)
+-- Name: companies companies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.companies
+    ADD CONSTRAINT companies_pkey PRIMARY KEY (symbol);
+
+
+--
+-- TOC entry 4932 (class 2606 OID 16463)
+-- Name: daily_stock_prices daily_stock_prices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.daily_stock_prices
+    ADD CONSTRAINT daily_stock_prices_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4934 (class 2606 OID 16465)
+-- Name: daily_stock_prices daily_stock_prices_symbol_trade_date_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.daily_stock_prices
+    ADD CONSTRAINT daily_stock_prices_symbol_trade_date_key UNIQUE (symbol, trade_date);
+
+
+--
+-- TOC entry 4940 (class 2606 OID 16502)
+-- Name: financial_metrics financial_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.financial_metrics
+    ADD CONSTRAINT financial_metrics_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4936 (class 2606 OID 16482)
+-- Name: quarterly_financials quarterly_financials_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quarterly_financials
+    ADD CONSTRAINT quarterly_financials_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4938 (class 2606 OID 16484)
+-- Name: quarterly_financials quarterly_financials_symbol_fiscal_date_ending_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quarterly_financials
+    ADD CONSTRAINT quarterly_financials_symbol_fiscal_date_ending_key UNIQUE (symbol, fiscal_date_ending);
+
+
+--
+-- TOC entry 4942 (class 2606 OID 24587)
+-- Name: stockprices_ohlc stockprices_ohlc_pkey; Type: CONSTRAINT; Schema: stg; Owner: postgres
+--
+
+ALTER TABLE ONLY stg.stockprices_ohlc
+    ADD CONSTRAINT stockprices_ohlc_pkey PRIMARY KEY (stagingid);
+
+
+--
+-- TOC entry 4961 (class 2606 OID 24651)
+-- Name: factfinancials factfinancials_stocksurrogatekey_fkey; Type: FK CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factfinancials
+    ADD CONSTRAINT factfinancials_stocksurrogatekey_fkey FOREIGN KEY (stocksurrogatekey) REFERENCES dwh.dimstock(stocksurrogatekey);
+
+
+--
+-- TOC entry 4960 (class 2606 OID 24612)
+-- Name: factstockprices factstockprices_stocksurrogatekey_fkey; Type: FK CONSTRAINT; Schema: dwh; Owner: postgres
+--
+
+ALTER TABLE ONLY dwh.factstockprices
+    ADD CONSTRAINT factstockprices_stocksurrogatekey_fkey FOREIGN KEY (stocksurrogatekey) REFERENCES dwh.dimstock(stocksurrogatekey);
+
+
+--
+-- TOC entry 4957 (class 2606 OID 16466)
+-- Name: daily_stock_prices daily_stock_prices_symbol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.daily_stock_prices
+    ADD CONSTRAINT daily_stock_prices_symbol_fkey FOREIGN KEY (symbol) REFERENCES public.companies(symbol);
+
+
+--
+-- TOC entry 4959 (class 2606 OID 16503)
+-- Name: financial_metrics financial_metrics_symbol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.financial_metrics
+    ADD CONSTRAINT financial_metrics_symbol_fkey FOREIGN KEY (symbol) REFERENCES public.companies(symbol) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4958 (class 2606 OID 16485)
+-- Name: quarterly_financials quarterly_financials_symbol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quarterly_financials
+    ADD CONSTRAINT quarterly_financials_symbol_fkey FOREIGN KEY (symbol) REFERENCES public.companies(symbol);
+
+
+-- Completed on 2026-10-06 14:21:07
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict DTv3kVRYJb708BiY4HYMaVPYAFim9E2OGTPtaMOoGrmc29HnRuBbDdLZ7SyINUm
+
