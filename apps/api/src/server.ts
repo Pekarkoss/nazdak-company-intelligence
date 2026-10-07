@@ -14,11 +14,10 @@ app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST || 'localhost', // <-- SİHİRLİ DOKUNUŞ BURASI
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD, 
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Bulut veritabanları (Supabase) güvenli SSL bağlantısını zorunlu tutar
+  }
 });
 
 // 1. ENDPOINT: Günlük Dashboard Verileri (OHLC eklendi)

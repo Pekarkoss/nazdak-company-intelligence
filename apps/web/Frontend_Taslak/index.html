@@ -432,92 +432,92 @@
     </div>
 
     <script>
-        // ========================================================
-        // YARDIMCI VE DUMMY ÜRETİCİ FONKSİYONLAR
-        // ========================================================
-        function goToCompareFromDetail() {
-            if (currentDetailSymbol) { document.getElementById('selectCompA').value = currentDetailSymbol; }
-            navigate('compare');
-        }
+		// ========================================================
+		// YARDIMCI VE DUMMY ÜRETİCİ FONKSİYONLAR
+		// ========================================================
+		function goToCompareFromDetail() {
+		if (currentDetailSymbol) { document.getElementById('selectCompA').value = currentDetailSymbol; }
+		navigate('compare');
+		}
 
-        function extractLineDataFromOHLC(ohlcData) {
-            if (!ohlcData) return { labels: [], data: [] };
-            let labels = []; let data = [];
-            ohlcData.forEach(item => { labels.push(item.x); data.push(parseFloat(item.y[3]).toFixed(2)); });
-            return { labels, data };
-        }
+		function extractLineDataFromOHLC(ohlcData) {
+		if (!ohlcData) return { labels: [], data: [] };
+		let labels = []; let data = [];
+		ohlcData.forEach(item => { labels.push(item.x); data.push(parseFloat(item.y[3]).toFixed(2)); });
+		return { labels, data };
+		}
 
-        function generateOHLC(basePrice, count, labels) {
-            let currentPrice = basePrice * 0.7;
-            return labels.map(label => {
-                let open = currentPrice;
-                let close = currentPrice * (1 + (Math.random() * 0.15 - 0.05));
-                let high = Math.max(open, close) * (1 + Math.random() * 0.04);
-                let low = Math.min(open, close) * (1 - Math.random() * 0.04);
-                currentPrice = close;
-                return { x: label, y: [open.toFixed(2), high.toFixed(2), low.toFixed(2), close.toFixed(2)] };
-            });
-        }
+		function generateOHLC(basePrice, count, labels) {
+		let currentPrice = basePrice * 0.7;
+		return labels.map(label => {
+		let open = currentPrice;
+		let close = currentPrice * (1 + (Math.random() * 0.15 - 0.05));
+		let high = Math.max(open, close) * (1 + Math.random() * 0.04);
+		let low = Math.min(open, close) * (1 - Math.random() * 0.04);
+		currentPrice = close;
+		return { x: label, y: [open.toFixed(2), high.toFixed(2), low.toFixed(2), close.toFixed(2)] };
+		});
+		}
 
-        const labels1A = ['Hft 1', 'Hft 2', 'Hft 3', 'Hft 4'];
-        const labels3A = ['Hft 2', 'Hft 4', 'Hft 6', 'Hft 8', 'Hft 10', 'Hft 12'];
-        const labels6A = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
-        const labels1Y = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-        const compChartLabels = { '1A': labels1A, '3A': labels3A, '6A': labels6A, '1Y': labels1Y };
-        const logoColors = ['#1e293b', '#0284c7', '#16a34a', '#dc2626', '#d97706', '#ea580c', '#be123c', '#047857'];
+		const labels1A = ['Hft 1', 'Hft 2', 'Hft 3', 'Hft 4'];
+		const labels3A = ['Hft 2', 'Hft 4', 'Hft 6', 'Hft 8', 'Hft 10', 'Hft 12'];
+		const labels6A = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
+		const labels1Y = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+		const compChartLabels = { '1A': labels1A, '3A': labels3A, '6A': labels6A, '1Y': labels1Y };
+		const logoColors = ['#1e293b', '#0284c7', '#16a34a', '#dc2626', '#d97706', '#ea580c', '#be123c', '#047857'];
 
-        // ========================================================
-        // API ENTEGRASYONU VE GLOBAL DEĞİŞKENLER
-        // ========================================================
-        let mockData = []; 
-        
-        let apexChartInstance = null;
-        let finBarChartInstance = null;
-        let ratiosLineChartInstance = null;
-        let compareChartInstance = null;
-        let tvWidgetInitialized = false;
-        
-        let activeMetricPeriod = '6A';
-        let activeChartType = 'candlestick'; 
-        let activeComparePeriod = '6A';
-        let currentDetailSymbol = null;
-        let currentSort = { key: null, asc: null };
+		// ========================================================
+		// API ENTEGRASYONU VE GLOBAL DEĞİŞKENLER
+		// ========================================================
+		let mockData = [];
 
-        // SAYFA YÜKLENDİĞİNDE VERİLERİ ÇEK
-        window.onload = async () => {
-            await fetchDashboardData();
-            populateCompareOptions();
-        };
+		let apexChartInstance = null;
+		let finBarChartInstance = null;
+		let ratiosLineChartInstance = null;
+		let compareChartInstance = null;
+		let tvWidgetInitialized = false;
 
-        // GERÇEK API FETCH FONKSİYONU
-        async function fetchDashboardData() {
-            try {
-                const response = await fetch('http://localhost:3000/api/stocks/dashboard');
-                const result = await response.json();
-                
-                if (result.success) {
-                    const uniqueDataMap = new Map();
-                    result.data.forEach(c => {
-                        if(!uniqueDataMap.has(c.symbol)) {
-                            uniqueDataMap.set(c.symbol, c);
-                        }
-                    });
+		let activeMetricPeriod = '6A';
+		let activeChartType = 'candlestick';
+		let activeComparePeriod = '6A';
+		let currentDetailSymbol = null;
+		let currentSort = { key: null, asc: null };
 
-                    mockData = Array.from(uniqueDataMap.values()).map((c, index) => {
-                        const p = parseFloat(c.currentprice) || 0;
-                        const changePct = parseFloat(c.changepct) || 0;
-                        
-                        const capVal = 2500 - (index * 150); 
-                        const revVal = 200 + (index * 20);
-                        const netVal = 50 + (index * 5);
-                        const fcfVal = 40 + (index * 3);
-                        const pe = parseFloat((25.4 - (index * 1.2)).toFixed(1));
-                        const growth = parseFloat((10.5 + (index * 0.8)).toFixed(1));
+		// SAYFA YÜKLENDİĞİNDE VERİLERİ ÇEK
+		window.onload = async () => {
+		await fetchDashboardData();
+		populateCompareOptions();
+		};
 
-                        const logoSymbol = c.symbol === 'GOOGL' ? 'GOOG' : c.symbol;
-                        const logoUrl = `https://companiesmarketcap.com/img/company-logos/64/${logoSymbol}.webp`;
-                        const bgColor = logoColors[index % logoColors.length].replace('#', '');
-                        const fallbackLogo = `https://ui-avatars.com/api/?name=${c.symbol.substring(0, 2)}&background=${bgColor}&color=fff&bold=true&font-size=0.4`;
+		// GERÇEK API FETCH FONKSİYONU
+		async function fetchDashboardData() {
+		try {
+		const response = await fetch('[https://nazdak-api.onrender.com/api/stocks/dashboard](https://nazdak-api.onrender.com/api/stocks/dashboard)');
+		const result = await response.json();
+
+		if (result.success) {
+		const uniqueDataMap = new Map();
+		result.data.forEach(c => {
+		if(!uniqueDataMap.has(c.symbol)) {
+		uniqueDataMap.set(c.symbol, c);
+		}
+		});
+
+		mockData = Array.from(uniqueDataMap.values()).map((c, index) => {
+		const p = parseFloat(c.currentprice) || 0;
+		const changePct = parseFloat(c.changepct) || 0;
+
+		const capVal = 2500 - (index * 150);
+		const revVal = 200 + (index * 20);
+		const netVal = 50 + (index * 5);
+		const fcfVal = 40 + (index * 3);
+		const pe = parseFloat((25.4 - (index * 1.2)).toFixed(1));
+		const growth = parseFloat((10.5 + (index * 0.8)).toFixed(1));
+
+		const logoSymbol = c.symbol === 'GOOGL' ? 'GOOG' : c.symbol;
+		const logoUrl = `https://companiesmarketcap.com/img/company-logos/64/${logoSymbol}.webp`;
+		const bgColor = logoColors[index % logoColors.length].replace('#', '');
+		const fallbackLogo = `https://ui-avatars.com/api/?name=${c.symbol.substring(0, 2)}&background=${bgColor}&color=fff&bold=true&font-size=0.4`;
 
                         return {
                             symbol: c.symbol,
