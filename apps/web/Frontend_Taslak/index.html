@@ -492,7 +492,7 @@
 		// GERÇEK API FETCH FONKSİYONU
 		async function fetchDashboardData() {
 		try {
-		const response = await fetch('[https://nazdak-api.onrender.com/api/stocks/dashboard](https://nazdak-api.onrender.com/api/stocks/dashboard)');
+		const response = await fetch('https://nazdak-api.onrender.com/api/stocks/dashboard');
 		const result = await response.json();
 
 		if (result.success) {
