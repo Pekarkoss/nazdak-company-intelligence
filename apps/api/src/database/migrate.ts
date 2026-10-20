@@ -24,12 +24,13 @@ async function runMigrations() {
       DROP TABLE IF EXISTS companies CASCADE;
     `);
 
-    // 1. Şirketler Tablosu
+    // 1. Şirketler Tablosu (Sektör bilgisi eklendi)
     console.log('⏳ "companies" tablosu oluşturuluyor...');
     await client.query(`
       CREATE TABLE companies (
         symbol VARCHAR(10) PRIMARY KEY,
         company_name VARCHAR(100) NOT NULL,
+        sector VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -51,7 +52,7 @@ async function runMigrations() {
       );
     `);
 
-    // 3. Çeyreklik Gelir Tablosu (Income Statement Fact Table)
+    // 3. Çeyreklik Gelir ve Bilanço Tablosu (Gelir tablosu ve Bilanço kalemleri birleştirildi)
     console.log('⏳ "quarterly_financials" tablosu oluşturuluyor...');
     await client.query(`
       CREATE TABLE quarterly_financials (
@@ -59,15 +60,24 @@ async function runMigrations() {
         symbol VARCHAR(10) REFERENCES companies(symbol) ON DELETE CASCADE,
         fiscal_date_ending DATE NOT NULL,
         reported_currency VARCHAR(10),
+        -- Gelir Tablosu Kalemleri
         total_revenue NUMERIC,
-        net_income NUMERIC,
+        gross_profit NUMERIC,
         operating_income NUMERIC,
+        net_income NUMERIC,
+        -- Bilanço Kalemleri (Caner Bey'in Detay Ekranı Talepleri)
+        total_assets NUMERIC,
+        total_equity NUMERIC,
+        cash_and_equivalents NUMERIC,
+        short_term_debt NUMERIC,
+        long_term_debt NUMERIC,
+        free_cash_flow NUMERIC,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(symbol, fiscal_date_ending)
       );
     `);
 
-    // 4. Finansal Metrikler (SCD Type 2 Boyut Tablosu)
+    // 4. Finansal Metrikler (SCD Type 2 Boyut Tablosu - Tüm eksik TTM ve Marj metrikleri eklendi)
     console.log('⏳ "financial_metrics" (SCD Type 2) tablosu oluşturuluyor...');
     await client.query(`
       CREATE TABLE financial_metrics (
@@ -75,13 +85,17 @@ async function runMigrations() {
         symbol VARCHAR(10) REFERENCES companies(symbol) ON DELETE CASCADE,
         last_price NUMERIC,
         daily_change_pct NUMERIC,
+        market_cap NUMERIC, -- Piyasa Değeri eklendi
         revenue_ttm NUMERIC,
+        net_income_ttm NUMERIC, -- Net Kâr TTM eklendi
         revenue_growth NUMERIC,
         gross_profit_margin NUMERIC,
         operating_margin NUMERIC,
         net_profit_margin NUMERIC,
-        free_cash_flow NUMERIC,
+        total_assets NUMERIC, -- Ana tablo varlık gösterimi için eklendi
+        cash_and_equivalents NUMERIC, -- Ana tablo nakit gösterimi için eklendi
         total_debt NUMERIC,
+        free_cash_flow NUMERIC,
         pe_ratio NUMERIC,
         is_active BOOLEAN DEFAULT TRUE,
         valid_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -116,7 +130,7 @@ async function runMigrations() {
     `);
 
     await client.query('COMMIT');
-    console.log('✅ Migration başarıyla tamamlandı! Tüm DWH tabloları ve görünümler hazır.');
+    console.log('✅ Migration başarıyla tamamlandı! Tüm DWH tabloları, bilanço kalemleri ve görünümler hazır.');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Migration sırasında hata oluştu:', error);
